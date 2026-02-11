@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.wav
+speakers.json
+test_*.json
+.claude/
+.vscode/
+package-lock.json

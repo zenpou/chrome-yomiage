@@ -1,0 +1,16 @@
+{
+  "name": "chrome-yomiage",
+  "version": "1.0.0",
+  "description": "COEIROINKを使って小説サイトを音声読み上げするChrome拡張機能",
+  "scripts": {
+    "build": "vite build && vite build --config vite.content.config.ts",
+    "dev": "vite build --watch & vite build --config vite.content.config.ts --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}
