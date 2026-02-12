@@ -235,6 +235,7 @@ export class FloatingUI {
   private settingsPanel!: HTMLElement;
   private clickToSeekToggle!: HTMLElement;
   private autoNextChapterToggle!: HTMLElement;
+  private autoScrollToggle!: HTMLElement;
   private speedRange!: HTMLInputElement;
   private speedVal!: HTMLElement;
 
@@ -247,6 +248,7 @@ export class FloatingUI {
   onNextChapter?: () => void;
   onClickToSeekChange?: (enabled: boolean) => void;
   onAutoNextChapterChange?: (enabled: boolean) => void;
+  onAutoScrollChange?: (enabled: boolean) => void;
   onSpeedChange?: (speed: number) => void;
 
   constructor() {
@@ -300,6 +302,10 @@ export class FloatingUI {
 
   setAutoNextChapter(enabled: boolean): void {
     this.autoNextChapterToggle.classList.toggle('on', enabled);
+  }
+
+  setAutoScroll(enabled: boolean): void {
+    this.autoScrollToggle.classList.toggle('on', enabled);
   }
 
   setSpeed(speed: number): void {
@@ -366,6 +372,12 @@ export class FloatingUI {
             </div>
           </div>
           <div class="settings-row">
+            <span class="settings-label">読んでいる箇所へ自動スクロール</span>
+            <div class="toggle-track on" id="auto-scroll-toggle">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+          <div class="settings-row">
             <span class="settings-label">速度</span>
             <div class="settings-slider-wrap">
               <input type="range" class="settings-range" id="speed-range" min="0.5" max="2.0" step="0.1" value="1.0">
@@ -389,6 +401,7 @@ export class FloatingUI {
     this.settingsPanel = this.shadow.querySelector('.settings-panel') as HTMLElement;
     this.clickToSeekToggle = this.shadow.querySelector('#click-to-seek-toggle') as HTMLElement;
     this.autoNextChapterToggle = this.shadow.querySelector('#auto-next-chapter-toggle') as HTMLElement;
+    this.autoScrollToggle = this.shadow.querySelector('#auto-scroll-toggle') as HTMLElement;
     this.speedRange = this.shadow.querySelector('#speed-range') as HTMLInputElement;
     this.speedVal = this.shadow.querySelector('#speed-val') as HTMLElement;
   }
@@ -417,6 +430,12 @@ export class FloatingUI {
       const enabled = !this.autoNextChapterToggle.classList.contains('on');
       this.autoNextChapterToggle.classList.toggle('on', enabled);
       this.onAutoNextChapterChange?.(enabled);
+    });
+
+    this.autoScrollToggle.addEventListener('click', () => {
+      const enabled = !this.autoScrollToggle.classList.contains('on');
+      this.autoScrollToggle.classList.toggle('on', enabled);
+      this.onAutoScrollChange?.(enabled);
     });
 
     this.speedRange.addEventListener('input', () => {

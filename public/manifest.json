@@ -26,7 +26,11 @@
   "content_scripts": [
     {
       "matches": [
-        "https://syosetu.org/*"
+        "https://syosetu.org/*",
+        "https://kakuyomu.jp/*",
+        "https://ncode.syosetu.com/*",
+        "https://novel18.syosetu.com/*",
+        "https://www.alphapolis.co.jp/novel/*"
       ],
       "js": ["content/index.js"],
       "run_at": "document_idle"
@@ -44,7 +48,7 @@
   "web_accessible_resources": [
     {
       "resources": ["icons/*"],
-      "matches": ["https://syosetu.org/*"]
+      "matches": ["https://syosetu.org/*", "https://kakuyomu.jp/*", "https://ncode.syosetu.com/*", "https://novel18.syosetu.com/*", "https://www.alphapolis.co.jp/*"]
     }
   ]
 }

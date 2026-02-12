@@ -151,22 +151,41 @@ export class AudioQueue {
       entry.state = 'ready';
     } catch (e) {
       entry.state = 'error';
+      // 拡張機能の再読み込みによりコンテキストが無効になった場合は再生を停止
+      if ((e as Error).message?.includes('Extension context invalidated')) {
+        this.stop();
+        return;
+      }
       this.onError?.(entry.paragraph, e as Error);
     }
   }
 
   private async playFrom(startIndex: number, generation: number): Promise<void> {
     let index = startIndex;
+    let consecutiveErrors = 0;
 
     while (index < this.queue.length) {
       if (this.stopRequested || this.playGeneration !== generation) return;
 
       const entry = this.queue[index];
 
-      if (entry.state === 'error' || entry.state === 'done') {
+      if (entry.state === 'done') {
         index++;
         continue;
       }
+
+      if (entry.state === 'error') {
+        consecutiveErrors++;
+        // 3回連続エラーなら接続障害とみなし停止
+        if (consecutiveErrors >= 3) {
+          this.setState('idle');
+          return;
+        }
+        index++;
+        continue;
+      }
+
+      consecutiveErrors = 0;
 
       // Chrome TTSモード: プリフェッチなしで直接再生
       if (this.isChromeTtsMode) {

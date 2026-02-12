@@ -1,12 +1,22 @@
 # 小説読み上げ（COEIROINK連携）
 
-ハーメルン（syosetu.org）の小説ページを COEIROINK または Chrome TTS で音声読み上げする Chrome 拡張機能。
+Web 小説サイトのテキストを COEIROINK または Chrome TTS で音声読み上げする Chrome 拡張機能。
+
+## 対応サイト
+
+| サイト | URL |
+|---|---|
+| ハーメルン | syosetu.org |
+| カクヨム | kakuyomu.jp |
+| 小説家になろう | ncode.syosetu.com |
+| ノクターンノベルズ | novel18.syosetu.com |
+| アルファポリス | www.alphapolis.co.jp |
 
 ## 機能
 
 - **COEIROINK 連携** — ローカルで動作する COEIROINK（localhost:50032）の TTS API を使って高品質な音声合成
 - **Chrome TTS フォールバック** — COEIROINK が不要な場合はブラウザ内蔵 TTS でも動作
-- **フローティング UI** — 読み上げ中のページ右下に操作パネルを表示
+- **フローティング UI** — ページ右下に操作パネルを表示
   - ▶ 再生 / ⏸ 一時停止・再開 / ⏹ 停止
   - ⏪ 前の段落 / ⏩ 次の段落
   - ⏮ 前話 / ⏭ 次話
@@ -15,6 +25,7 @@
 - **設定パネル**（⚙ ボタン）
   - 本文クリックでその段落からシーク
   - 最終段落まで読み終えたら自動で次話へ移動
+  - 読んでいる箇所への自動スクロール ON/OFF
   - 速度リアルタイム調整
 - **ポップアップ設定** — 話者・スタイル・速度・音量・ピッチ・抑揚の変更
 
@@ -38,7 +49,7 @@ npm run build
 
 1. COEIROINK を起動する
 2. 拡張アイコンをクリックしてポップアップを開き、話者を選択して「設定を保存」
-3. ハーメルンの小説本文ページ（例: `https://syosetu.org/novel/123456/1/`）を開く
+3. 対応サイトの小説本文ページを開く
 4. 右下にフローティング UI が表示されるので ▶ ボタンで読み上げ開始
 
 ## 開発
@@ -61,10 +72,14 @@ src/
 ├── adapters/
 │   ├── adapter-interface.ts       # INovelAdapter インターフェース
 │   ├── adapter-registry.ts        # アダプター登録・URL マッチング
-│   └── hameln.ts                  # ハーメルン用アダプター
+│   ├── hameln.ts                  # ハーメルン
+│   ├── kakuyomu.ts                # カクヨム
+│   ├── narou.ts                   # 小説家になろう / ノクターンノベルズ
+│   └── alphapolis.ts              # アルファポリス
 ├── audio/
 │   ├── audio-queue.ts             # 再生キュー・先読みバッファリング
-│   └── audio-player.ts            # Web Audio API ラッパー
+│   ├── audio-player.ts            # Web Audio API ラッパー
+│   └── chrome-tts.ts              # Chrome TTS ラッパー
 ├── api/coeiroink.ts               # COEIROINK REST API クライアント
 ├── storage/settings.ts            # chrome.storage.local ラッパー
 └── types/                         # 型定義
@@ -73,5 +88,6 @@ src/
 ### 新しいサイトへの対応方法
 
 1. `src/adapters/{サイト名}.ts` を作成して `INovelAdapter` を実装
+   - 本文が動的ロードされるサイトは `waitForContent()` を実装する
 2. `src/adapters/adapter-registry.ts` の `adapters[]` に追加
-3. `public/manifest.json` の `content_scripts.matches` に URL パターンを追加
+3. `public/manifest.json` の `content_scripts.matches` と `web_accessible_resources.matches` に URL パターンを追加

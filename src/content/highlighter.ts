@@ -12,6 +12,7 @@ styleEl.textContent = `
 
 export class Highlighter {
   private current: Element | null = null;
+  autoScroll = true;
 
   inject(): void {
     if (!document.head.contains(styleEl)) {
@@ -25,7 +26,9 @@ export class Highlighter {
     }
     if (element) {
       element.classList.add(HIGHLIGHT_CLASS);
-      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (this.autoScroll) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
     this.current = element;
   }

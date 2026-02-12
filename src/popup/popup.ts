@@ -121,6 +121,7 @@ async function init() {
       outputSamplingRate: settings.outputSamplingRate,
       clickToSeek: settings.clickToSeek,
       autoNextChapter: settings.autoNextChapter,
+      autoScroll: settings.autoScroll,
     });
 
     saveStatus.textContent = '保存しました ✓';

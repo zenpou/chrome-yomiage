@@ -10,6 +10,7 @@ export interface UserSettings {
   outputSamplingRate: number;
   clickToSeek: boolean;
   autoNextChapter: boolean;
+  autoScroll: boolean;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -24,4 +25,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
   outputSamplingRate: 24000,
   clickToSeek: false,
   autoNextChapter: false,
+  autoScroll: true,
 };

@@ -2,7 +2,7 @@ import { detectAdapter } from '../adapters/adapter-registry';
 import { AudioQueue } from '../audio/audio-queue';
 import { FloatingUI } from './floating-ui';
 import { Highlighter } from './highlighter';
-import { loadSettings } from '../storage/settings';
+import { loadSettings, isExtensionContextValid } from '../storage/settings';
 
 async function main() {
   const AUTOPLAY_KEY = 'yomiage-autoplay';
@@ -10,6 +10,11 @@ async function main() {
   const adapter = detectAdapter(location.href);
   if (!adapter) return;
   if (!adapter.isNovelPage()) return;
+
+  // 動的ロードが必要なサイトはコンテンツ準備を待つ
+  if (adapter.waitForContent) {
+    await adapter.waitForContent();
+  }
 
   const paragraphs = adapter.extractParagraphs();
   if (paragraphs.length === 0) return;
@@ -28,9 +33,11 @@ async function main() {
   ui.setChapterNav(prevChapterUrl !== null, nextChapterUrl !== null);
   ui.setClickToSeek(settings.clickToSeek);
   ui.setAutoNextChapter(settings.autoNextChapter);
+  ui.setAutoScroll(settings.autoScroll);
   ui.setSpeed(settings.speedScale);
 
   let autoNextChapter = settings.autoNextChapter;
+  highlighter.autoScroll = settings.autoScroll;
 
   let synthesizeParams = {
     speakerUuid: settings.speakerUuid,
@@ -72,6 +79,11 @@ async function main() {
 
   queue.onError = (p, err) => {
     console.error(`[yomiage] 段落${p.index}の音声生成エラー:`, err);
+    if (err.message?.includes('Failed to fetch')) {
+      ui.showError('COEIROINKに接続できません');
+    } else {
+      ui.showError(err.message);
+    }
   };
 
   // UIボタンのイベント
@@ -223,30 +235,37 @@ async function main() {
 
   applyClickToSeek(settings.clickToSeek);
 
+  const saveSetting = (patch: Record<string, unknown>) => {
+    if (!isExtensionContextValid()) return;
+    loadSettings().then((s) => {
+      if (!isExtensionContextValid()) return;
+      chrome.storage.local.set({ settings: { ...s, ...patch } });
+    });
+  };
+
   ui.onClickToSeekChange = (enabled) => {
     applyClickToSeek(enabled);
-    loadSettings().then((s) => {
-      chrome.storage.local.set({ settings: { ...s, clickToSeek: enabled } });
-    });
+    saveSetting({ clickToSeek: enabled });
   };
 
   ui.onAutoNextChapterChange = (enabled) => {
     autoNextChapter = enabled;
-    loadSettings().then((s) => {
-      chrome.storage.local.set({ settings: { ...s, autoNextChapter: enabled } });
-    });
+    saveSetting({ autoNextChapter: enabled });
+  };
+
+  ui.onAutoScrollChange = (enabled) => {
+    highlighter.autoScroll = enabled;
+    saveSetting({ autoScroll: enabled });
   };
 
   ui.onSpeedChange = (speed) => {
     synthesizeParams = { ...synthesizeParams, speedScale: speed };
     queue.updateParams(synthesizeParams);
-    loadSettings().then((s) => {
-      chrome.storage.local.set({ settings: { ...s, speedScale: speed } });
-    });
+    saveSetting({ speedScale: speed });
   };
 
   // ポップアップで設定変更された場合はパラメータを更新
-  chrome.storage.onChanged.addListener((changes) => {
+  if (isExtensionContextValid()) chrome.storage.onChanged.addListener((changes) => {
     if (changes.settings?.newValue) {
       const s = changes.settings.newValue;
       queue.updateParams({
@@ -264,6 +283,8 @@ async function main() {
       ui.setClickToSeek(s.clickToSeek ?? false);
       autoNextChapter = s.autoNextChapter ?? false;
       ui.setAutoNextChapter(s.autoNextChapter ?? false);
+      highlighter.autoScroll = s.autoScroll ?? true;
+      ui.setAutoScroll(s.autoScroll ?? true);
       ui.setSpeed(s.speedScale);
     }
   });
