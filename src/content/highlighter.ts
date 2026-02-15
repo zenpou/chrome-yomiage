@@ -27,10 +27,21 @@ export class Highlighter {
     if (element) {
       element.classList.add(HIGHLIGHT_CLASS);
       if (this.autoScroll) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        this.scrollToElement(element);
       }
     }
     this.current = element;
+  }
+
+  private scrollToElement(element: Element): void {
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    // 要素が画面上半分（上から40%の位置）に来るようにスクロール
+    // → 下に約60%の余白ができ、続きを目で読める
+    const targetY = viewportHeight * 0.4;
+    if (rect.top < 0 || rect.top > viewportHeight * 0.8) {
+      window.scrollBy({ top: rect.top - targetY, behavior: 'smooth' });
+    }
   }
 
   clearAll(): void {

@@ -60,6 +60,14 @@ export class AudioQueue {
 
   async play(): Promise<void> {
     if (!this.synthesizeParams) return;
+
+    // 現在再生中の音声を確実に停止（二重再生防止）
+    if (this.isChromeTtsMode) {
+      stopChromeTts();
+    } else {
+      stopCurrentAudio();
+    }
+
     this.stopRequested = false;
     this.pauseRequested = false;
     const generation = ++this.playGeneration;

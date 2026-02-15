@@ -3,6 +3,13 @@ import { AudioQueue } from '../audio/audio-queue';
 import { FloatingUI } from './floating-ui';
 import { Highlighter } from './highlighter';
 import { loadSettings, isExtensionContextValid } from '../storage/settings';
+import {
+  setupMediaSession,
+  activateMediaSession,
+  pauseMediaSession,
+  deactivateMediaSession,
+  updateMediaMetadata,
+} from './media-session';
 
 async function main() {
   const AUTOPLAY_KEY = 'yomiage-autoplay';
@@ -53,10 +60,24 @@ async function main() {
 
   queue.load(paragraphs, synthesizeParams);
 
+  // メディアセッション（イヤホンボタン対応）
+  // seekInProgress 中はメディアセッションの play ハンドラーを抑止して二重再生を防ぐ
+  let seekInProgress = false;
+  setupMediaSession({
+    onPlay: () => { if (!seekInProgress) ui.onPlay?.(); },
+    onPause: () => ui.onPause?.(),
+    onStop: () => ui.onStop?.(),
+    onNextTrack: () => ui.onNextParagraph?.(),
+    onPrevTrack: () => ui.onPrevParagraph?.(),
+  });
+
   // 再生コールバック
   queue.onParagraphStart = (p) => {
     highlighter.highlight(p.element);
     ui.updateProgress(p.index + 1, paragraphs.length);
+    // メディアセッションのメタデータを更新
+    const truncated = p.text.length > 60 ? p.text.slice(0, 60) + '…' : p.text;
+    updateMediaMetadata(truncated, adapter.siteName);
   };
 
   queue.onParagraphEnd = (_p) => {
@@ -75,6 +96,14 @@ async function main() {
 
   queue.onStateChange = (state) => {
     ui.setState(state);
+    // メディアセッション状態を同期
+    if (state === 'playing') {
+      activateMediaSession(adapter.siteName);
+    } else if (state === 'paused') {
+      pauseMediaSession();
+    } else if (state === 'idle') {
+      deactivateMediaSession();
+    }
   };
 
   queue.onError = (p, err) => {
@@ -153,6 +182,7 @@ async function main() {
 
   ui.onPrevParagraph = () => {
     const wasPlaying = queue.state === 'playing' || queue.state === 'paused';
+    seekInProgress = true;
     queue.seekTo(queue.index - 1);
     highlighter.clearAll();
     if (wasPlaying) {
@@ -160,12 +190,15 @@ async function main() {
         console.error('[yomiage] 再生エラー:', err);
         ui.showError(err.message);
         ui.setState('idle');
-      });
+      }).finally(() => { seekInProgress = false; });
+    } else {
+      seekInProgress = false;
     }
   };
 
   ui.onNextParagraph = () => {
     const wasPlaying = queue.state === 'playing' || queue.state === 'paused';
+    seekInProgress = true;
     queue.seekTo(queue.index + 1);
     highlighter.clearAll();
     if (wasPlaying) {
@@ -173,7 +206,9 @@ async function main() {
         console.error('[yomiage] 再生エラー:', err);
         ui.showError(err.message);
         ui.setState('idle');
-      });
+      }).finally(() => { seekInProgress = false; });
+    } else {
+      seekInProgress = false;
     }
   };
 
@@ -212,13 +247,14 @@ async function main() {
           // テキスト選択中はシーク動作をしない
           if (window.getSelection()?.toString()) return;
           e.preventDefault();
+          seekInProgress = true;
           queue.seekTo(p.index);
           highlighter.clearAll();
           queue.play().catch((err) => {
             console.error('[yomiage] 再生エラー:', err);
             ui.showError(err.message);
             ui.setState('idle');
-          });
+          }).finally(() => { seekInProgress = false; });
         };
         p.element.addEventListener('click', handler);
         paragraphClickHandlers.set(p.element, handler);
