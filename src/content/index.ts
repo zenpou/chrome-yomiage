@@ -1,8 +1,11 @@
 import { detectAdapter } from '../adapters/adapter-registry';
-import { AudioQueue } from '../audio/audio-queue';
+import { AudioQueue, type VoiceMap } from '../audio/audio-queue';
+import { isChromeTts } from '../audio/chrome-tts';
 import { FloatingUI } from './floating-ui';
 import { Highlighter } from './highlighter';
+import { assignRoles } from './voice-classifier';
 import { loadSettings, isExtensionContextValid } from '../storage/settings';
+import type { RoleVoice } from '../types/settings';
 import {
   setupMediaSession,
   activateMediaSession,
@@ -25,6 +28,24 @@ async function main() {
 
   const paragraphs = adapter.extractParagraphs();
   if (paragraphs.length === 0) return;
+
+  // 段落に役割（地の文/会話文1/会話文2/心の声）を付与
+  assignRoles(paragraphs);
+
+  // 設定から役割→声のマップを構築（Chrome TTSエンジン時は無効）
+  const buildVoiceMap = (s: {
+    speakerUuid: string;
+    dialogue1Voice?: RoleVoice | null;
+    dialogue2Voice?: RoleVoice | null;
+    monologueVoice?: RoleVoice | null;
+  }): VoiceMap => {
+    if (isChromeTts(s.speakerUuid)) return {};
+    const map: VoiceMap = {};
+    if (s.dialogue1Voice?.speakerUuid) map.dialogue1 = s.dialogue1Voice;
+    if (s.dialogue2Voice?.speakerUuid) map.dialogue2 = s.dialogue2Voice;
+    if (s.monologueVoice?.speakerUuid) map.monologue = s.monologueVoice;
+    return map;
+  };
 
   const settings = await loadSettings();
   const queue = new AudioQueue();
@@ -58,7 +79,7 @@ async function main() {
     outputSamplingRate: settings.outputSamplingRate,
   };
 
-  queue.load(paragraphs, synthesizeParams);
+  queue.load(paragraphs, synthesizeParams, buildVoiceMap(settings));
 
   // メディアセッション（イヤホンボタン対応）
   // seekInProgress 中はメディアセッションの play ハンドラーを抑止して二重再生を防ぐ
@@ -157,7 +178,7 @@ async function main() {
           postPhonemeLength: latestSettings.postPhonemeLength,
           outputSamplingRate: latestSettings.outputSamplingRate,
         };
-        queue.updateParams(synthesizeParams);
+        queue.updateParams(synthesizeParams, buildVoiceMap(latestSettings));
         queue.play().catch((err) => {
           console.error('[yomiage] 再生エラー:', err);
           ui.showError(err.message);
@@ -314,7 +335,7 @@ async function main() {
         prePhonemeLength: s.prePhonemeLength,
         postPhonemeLength: s.postPhonemeLength,
         outputSamplingRate: s.outputSamplingRate,
-      });
+      }, buildVoiceMap(s));
       applyClickToSeek(s.clickToSeek ?? false);
       ui.setClickToSeek(s.clickToSeek ?? false);
       autoNextChapter = s.autoNextChapter ?? false;

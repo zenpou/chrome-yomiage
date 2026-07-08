@@ -2,6 +2,7 @@ import './popup.css';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { CHROME_TTS_PREFIX } from '../audio/chrome-tts';
 import type { Speaker } from '../types/coeiroink';
+import type { RoleVoice } from '../types/settings';
 
 type Engine = 'coeiroink' | 'chrome';
 
@@ -23,6 +24,7 @@ async function init() {
   const saveStatus = document.getElementById('save-status')!;
   const tabCoeiroink = document.getElementById('engine-coeiroink') as HTMLButtonElement;
   const tabChrome = document.getElementById('engine-chrome') as HTMLButtonElement;
+  const roleVoicesSection = document.getElementById('role-voices-section')!;
 
   // スライダーの値表示
   speedInput.addEventListener('input', () => { speedVal.textContent = Number(speedInput.value).toFixed(1); });
@@ -60,12 +62,14 @@ async function init() {
       connectionEl.style.display = '';
       styleSection.classList.remove('hidden');
       intonationSection.classList.remove('hidden');
+      roleVoicesSection.classList.remove('hidden');
       renderCoeiroinkSpeakers(speakers, speakerSel);
       updateStyles(speakerSel.value);
     } else {
       connectionEl.style.display = 'none';
       styleSection.classList.add('hidden');
       intonationSection.classList.add('hidden');
+      roleVoicesSection.classList.add('hidden');
       renderChromeTtsSpeakers(chromeTtsVoices, speakerSel);
     }
   };
@@ -92,6 +96,43 @@ async function init() {
     }
   };
 
+  // 役割別音声（会話文1/会話文2/心の声）のセレクトを構築
+  const roleSelects = ([
+    { key: 'dialogue1Voice', speakerId: 'role-d1-speaker', styleId: 'role-d1-style', fallbackLabel: '全般と同じ' },
+    { key: 'dialogue2Voice', speakerId: 'role-d2-speaker', styleId: 'role-d2-style', fallbackLabel: '会話文1と同じ' },
+    { key: 'monologueVoice', speakerId: 'role-mono-speaker', styleId: 'role-mono-style', fallbackLabel: '全般と同じ' },
+  ] as const).map((def) => ({
+    key: def.key,
+    speakerSel: document.getElementById(def.speakerId) as HTMLSelectElement,
+    styleSel: document.getElementById(def.styleId) as HTMLSelectElement,
+    fallbackLabel: def.fallbackLabel,
+  }));
+
+  const updateRoleStyles = (speakerSel: HTMLSelectElement, styleSel: HTMLSelectElement, selectedStyleId?: number) => {
+    styleSel.innerHTML = '';
+    const speaker = speakers.find((s) => s.speakerUuid === speakerSel.value);
+    if (!speaker) {
+      styleSel.add(new Option('-', '0'));
+      styleSel.disabled = true;
+      return;
+    }
+    styleSel.disabled = false;
+    speaker.styles.forEach((st) => {
+      styleSel.add(new Option(st.styleName, String(st.styleId)));
+    });
+    if (selectedStyleId !== undefined) styleSel.value = String(selectedStyleId);
+  };
+
+  roleSelects.forEach(({ key, speakerSel: sel, styleSel, fallbackLabel }) => {
+    sel.innerHTML = '';
+    sel.add(new Option(fallbackLabel, ''));
+    speakers.forEach((s) => sel.add(new Option(s.speakerName, s.speakerUuid)));
+    const saved = settings[key];
+    if (saved?.speakerUuid) sel.value = saved.speakerUuid;
+    updateRoleStyles(sel, styleSel, saved?.styleId);
+    sel.addEventListener('change', () => updateRoleStyles(sel, styleSel));
+  });
+
   // 初期エンジンで表示（保存済み設定を復元）
   switchEngine(savedEngine);
 
@@ -109,7 +150,17 @@ async function init() {
     const speakerUuid = speakerSel.value;
     const styleId = currentEngine === 'coeiroink' ? Number(styleSel.value) || 0 : 0;
 
+    // 役割別音声を読み取る（COEIROINK話者が取得できない時は保存済み設定を維持）
+    const readRoleVoice = (i: number, saved: RoleVoice | null): RoleVoice | null => {
+      if (currentEngine !== 'coeiroink' || speakers.length === 0) return saved;
+      const { speakerSel: sel, styleSel: sSel } = roleSelects[i];
+      return sel.value ? { speakerUuid: sel.value, styleId: Number(sSel.value) || 0 } : null;
+    };
+
     await saveSettings({
+      dialogue1Voice: readRoleVoice(0, settings.dialogue1Voice),
+      dialogue2Voice: readRoleVoice(1, settings.dialogue2Voice),
+      monologueVoice: readRoleVoice(2, settings.monologueVoice),
       speakerUuid,
       styleId,
       speedScale: Number(speedInput.value),

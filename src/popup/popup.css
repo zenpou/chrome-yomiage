@@ -80,8 +80,24 @@ body {
   color: #fff;
 }
 
-.section.hidden {
+.section.hidden,
+#role-voices-section.hidden {
   display: none;
+}
+
+.role-row {
+  display: flex;
+  gap: 6px;
+}
+
+.role-row .role-speaker {
+  flex: 3;
+  min-width: 0;
+}
+
+.role-row .role-style {
+  flex: 2;
+  min-width: 0;
 }
 
 .label {

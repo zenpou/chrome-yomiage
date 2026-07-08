@@ -25,21 +25,23 @@ export class NarouAdapter implements INovelAdapter {
       }
     }
 
-    // 本文段落（<br>のみの空行を除外）
-    const body = document.querySelector('div.js-novel-text');
-    if (!body) return paragraphs;
+    // 本文段落（前書き・本文・後書きを順番に全て取得、<br>のみの空行を除外）
+    const bodies = document.querySelectorAll('div.js-novel-text');
+    if (bodies.length === 0) return paragraphs;
 
-    body.querySelectorAll('p').forEach((el) => {
-      const text = this.extractText(el);
-      if (text.length === 0) return;
-      paragraphs.push({ text, element: el, index: index++ });
+    bodies.forEach((body) => {
+      body.querySelectorAll('p').forEach((el) => {
+        const text = this.extractText(el);
+        if (text.length === 0) return;
+        paragraphs.push({ text, element: el, index: index++ });
+      });
     });
 
     return paragraphs;
   }
 
   getContainerElement(): Element {
-    return document.querySelector('div.js-novel-text') ?? document.body;
+    return document.querySelector('div.p-novel__body') ?? document.querySelector('div.js-novel-text') ?? document.body;
   }
 
   getPrevChapterUrl(): string | null {

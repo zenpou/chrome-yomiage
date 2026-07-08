@@ -4,8 +4,6 @@ const SHADOW_CSS = `
 :host {
   all: initial;
   position: fixed;
-  bottom: 20px;
-  right: 20px;
   z-index: 2147483647;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
   font-size: 13px;
@@ -29,6 +27,11 @@ const SHADOW_CSS = `
   align-items: center;
   gap: 6px;
   margin-bottom: 8px;
+  cursor: grab;
+}
+
+.header.dragging {
+  cursor: grabbing;
 }
 
 .title {
@@ -238,6 +241,8 @@ export class FloatingUI {
   private autoScrollToggle!: HTMLElement;
   private speedRange!: HTMLInputElement;
   private speedVal!: HTMLElement;
+  private headerEl!: HTMLElement;
+  private containerEl!: HTMLElement;
 
   onPlay?: () => void;
   onPause?: () => void;
@@ -261,6 +266,7 @@ export class FloatingUI {
 
   mount(): void {
     document.body.appendChild(this.host);
+    this.restorePosition();
   }
 
   unmount(): void {
@@ -404,6 +410,8 @@ export class FloatingUI {
     this.autoScrollToggle = this.shadow.querySelector('#auto-scroll-toggle') as HTMLElement;
     this.speedRange = this.shadow.querySelector('#speed-range') as HTMLInputElement;
     this.speedVal = this.shadow.querySelector('#speed-val') as HTMLElement;
+    this.headerEl = this.shadow.querySelector('.header') as HTMLElement;
+    this.containerEl = this.shadow.querySelector('.container') as HTMLElement;
   }
 
   private bindEvents(): void {
@@ -443,5 +451,75 @@ export class FloatingUI {
       this.speedVal.textContent = val.toFixed(1);
       this.onSpeedChange?.(val);
     });
+
+    // ドラッグ移動
+    let dragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    this.headerEl.addEventListener('mousedown', (e: MouseEvent) => {
+      // 設定ボタンのクリックはドラッグしない
+      if ((e.target as HTMLElement).closest('.btn-settings')) return;
+      dragging = true;
+      dragOffsetX = e.clientX - this.host.offsetLeft;
+      dragOffsetY = e.clientY - this.host.offsetTop;
+      this.headerEl.classList.add('dragging');
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!dragging) return;
+      let x = e.clientX - dragOffsetX;
+      let y = e.clientY - dragOffsetY;
+      // 画面外にはみ出さないようにクランプ
+      const rect = this.containerEl.getBoundingClientRect();
+      x = Math.max(0, Math.min(x, window.innerWidth - rect.width));
+      y = Math.max(0, Math.min(y, window.innerHeight - rect.height));
+      this.host.style.left = `${x}px`;
+      this.host.style.top = `${y}px`;
+      this.host.style.right = 'auto';
+      this.host.style.bottom = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      this.headerEl.classList.remove('dragging');
+      this.savePosition();
+    });
+  }
+
+  private static readonly POS_KEY = 'yomiage-ui-position';
+
+  private savePosition(): void {
+    const x = this.host.offsetLeft;
+    const y = this.host.offsetTop;
+    // 画面サイズに対する比率で保存（リサイズ対応）
+    const pos = {
+      xRatio: x / window.innerWidth,
+      yRatio: y / window.innerHeight,
+    };
+    try { localStorage.setItem(FloatingUI.POS_KEY, JSON.stringify(pos)); } catch { /* ignore */ }
+  }
+
+  private restorePosition(): void {
+    try {
+      const raw = localStorage.getItem(FloatingUI.POS_KEY);
+      if (raw) {
+        const pos = JSON.parse(raw);
+        const x = pos.xRatio * window.innerWidth;
+        const y = pos.yRatio * window.innerHeight;
+        // クランプ
+        const rect = this.containerEl.getBoundingClientRect();
+        this.host.style.left = `${Math.max(0, Math.min(x, window.innerWidth - rect.width))}px`;
+        this.host.style.top = `${Math.max(0, Math.min(y, window.innerHeight - rect.height))}px`;
+        this.host.style.right = 'auto';
+        this.host.style.bottom = 'auto';
+        return;
+      }
+    } catch { /* ignore */ }
+    // デフォルト位置: 右下
+    this.host.style.bottom = '20px';
+    this.host.style.right = '20px';
   }
 }

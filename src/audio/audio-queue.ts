@@ -1,5 +1,6 @@
-import type { Paragraph } from '../adapters/adapter-interface';
+import type { Paragraph, ParagraphRole } from '../adapters/adapter-interface';
 import type { SynthesizeRequest } from '../types/coeiroink';
+import type { RoleVoice } from '../types/settings';
 import { playAudioData, stopCurrentAudio, suspendAudio, resumeAudio } from './audio-player';
 import {
   isChromeTts,
@@ -18,10 +19,14 @@ interface QueueEntry {
 
 export type QueueState = 'idle' | 'playing' | 'paused' | 'loading';
 
+/** 役割→声の対応。未設定の役割は全般の声にフォールバックする */
+export type VoiceMap = Partial<Record<'dialogue1' | 'dialogue2' | 'monologue', RoleVoice>>;
+
 export class AudioQueue {
   private queue: QueueEntry[] = [];
   private currentIndex = 0;
   private synthesizeParams: Omit<SynthesizeRequest, 'text'> | null = null;
+  private voiceMap: VoiceMap = {};
   private prefetchAhead = 2;
   private _state: QueueState = 'idle';
   private stopRequested = false;
@@ -50,10 +55,11 @@ export class AudioQueue {
     return !!this.synthesizeParams && isChromeTts(this.synthesizeParams.speakerUuid);
   }
 
-  load(paragraphs: Paragraph[], params: Omit<SynthesizeRequest, 'text'>): void {
+  load(paragraphs: Paragraph[], params: Omit<SynthesizeRequest, 'text'>, voiceMap: VoiceMap = {}): void {
     this.queue = paragraphs.map((p) => ({ paragraph: p, state: 'pending' }));
     this.currentIndex = 0;
     this.synthesizeParams = params;
+    this.voiceMap = voiceMap;
     this.stopRequested = false;
     this.pauseRequested = false;
   }
@@ -122,8 +128,9 @@ export class AudioQueue {
     this.queue[this.currentIndex].state = 'pending';
   }
 
-  updateParams(params: Omit<SynthesizeRequest, 'text'>): void {
+  updateParams(params: Omit<SynthesizeRequest, 'text'>, voiceMap?: VoiceMap): void {
     this.synthesizeParams = params;
+    if (voiceMap) this.voiceMap = voiceMap;
     this.queue.forEach((e) => {
       if (e.state === 'ready' || e.state === 'fetching') {
         e.state = 'pending';
@@ -146,13 +153,26 @@ export class AudioQueue {
     targets.forEach((entry) => this.fetchEntry(entry));
   }
 
+  /** 役割に応じた声を返す。未設定なら undefined（全般の声を使用） */
+  private voiceForRole(role?: ParagraphRole): RoleVoice | undefined {
+    if (role === 'dialogue1') return this.voiceMap.dialogue1;
+    if (role === 'dialogue2') return this.voiceMap.dialogue2 ?? this.voiceMap.dialogue1;
+    if (role === 'monologue') return this.voiceMap.monologue;
+    return undefined;
+  }
+
   private async fetchEntry(entry: QueueEntry): Promise<void> {
     if (!this.synthesizeParams) return;
     entry.state = 'fetching';
     try {
+      const voice = this.voiceForRole(entry.paragraph.role);
       const response = await chrome.runtime.sendMessage({
         type: 'SYNTHESIZE',
-        payload: { ...this.synthesizeParams, text: entry.paragraph.text },
+        payload: {
+          ...this.synthesizeParams,
+          ...(voice ? { speakerUuid: voice.speakerUuid, styleId: voice.styleId } : {}),
+          text: entry.paragraph.text,
+        },
       });
       if (response.error) throw new Error(response.error);
       entry.audioData = response.audioData;
