@@ -199,6 +199,7 @@ export class AudioQueue {
         continue;
       }
 
+      // 先読み中に合成が失敗していた段落
       if (entry.state === 'error') {
         consecutiveErrors++;
         // 3回連続エラーなら接続障害とみなし停止
@@ -210,13 +211,12 @@ export class AudioQueue {
         continue;
       }
 
-      consecutiveErrors = 0;
-
       // Chrome TTSモード: プリフェッチなしで直接再生
+      let synthFailed = false;
       if (this.isChromeTtsMode) {
         await this.playEntryWithChromeTts(entry, index);
       } else {
-        await this.playEntryWithCoeiroink(entry, index);
+        synthFailed = !(await this.playEntryWithCoeiroink(entry, index));
       }
 
       if (this.stopRequested || this.playGeneration !== generation) return;
@@ -227,6 +227,20 @@ export class AudioQueue {
         if (this.stopRequested || this.playGeneration !== generation) return;
       }
 
+      // この段落の合成が失敗した場合は done にせず（onParagraphEnd も発火させず）
+      // 連続エラーとして数える。カウンタは段落を1つ読み切ったときだけリセットするので、
+      // ここでリセットしてしまうと「3回連続」の判定が成立しなくなる。
+      if (synthFailed) {
+        consecutiveErrors++;
+        if (consecutiveErrors >= 3) {
+          this.setState('idle');
+          return;
+        }
+        index++;
+        continue;
+      }
+
+      consecutiveErrors = 0;
       entry.state = 'done';
       this.onParagraphEnd?.(entry.paragraph);
       index++;
@@ -260,7 +274,8 @@ export class AudioQueue {
     }
   }
 
-  private async playEntryWithCoeiroink(entry: QueueEntry, index: number): Promise<void> {
+  /** @returns 段落を読み切れたら true。合成に失敗した／中断された場合は false */
+  private async playEntryWithCoeiroink(entry: QueueEntry, index: number): Promise<boolean> {
     // 現在地を先に更新し、この段落の再生準備～再生中（＝合成サーバーへのネットワーク的な
     // アイドル時間）を使って続きの段落を先読み合成しておく。これを再生完了後に呼ぶと
     // 1段落分手遅れになり、次の段落開始時に合成待ちのウェイトが発生する。
@@ -269,7 +284,7 @@ export class AudioQueue {
 
     // バッファが準備できるまで待機
     while (entry.state === 'fetching' || entry.state === 'pending') {
-      if (this.stopRequested) return;
+      if (this.stopRequested) return false;
       if (entry.state === 'pending') {
         await this.fetchEntry(entry);
       } else {
@@ -277,8 +292,9 @@ export class AudioQueue {
       }
     }
 
-    if (entry.state === 'error') return;
-    if (!entry.audioData) return;
+    if (entry.state === 'error') return false;
+    // 合成は成功したが音声が空のケース。エラー扱いにはせず読み飛ばす
+    if (!entry.audioData) return true;
 
     entry.state = 'playing';
     this.setState('playing');
@@ -289,6 +305,7 @@ export class AudioQueue {
     } catch (e) {
       console.error('[yomiage] 再生エラー:', e);
     }
+    return true;
   }
 }
 
