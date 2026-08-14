@@ -5,7 +5,7 @@ import { FloatingUI } from './floating-ui';
 import { Highlighter } from './highlighter';
 import { assignRoles } from './voice-classifier';
 import { loadSettings, isExtensionContextValid } from '../storage/settings';
-import type { RoleVoice } from '../types/settings';
+import type { RoleVoice, UserSettings } from '../types/settings';
 import {
   setupMediaSession,
   activateMediaSession,
@@ -258,13 +258,13 @@ async function main() {
   }
 
   // 段落クリックでシーク
-  const paragraphClickHandlers = new Map<Element, (e: MouseEvent) => void>();
+  const paragraphClickHandlers = new Map<Element, (e: Event) => void>();
 
   const applyClickToSeek = (enabled: boolean) => {
     if (enabled) {
       paragraphs.forEach((p) => {
         if (!p.element || paragraphClickHandlers.has(p.element)) return;
-        const handler = (e: MouseEvent) => {
+        const handler = (e: Event) => {
           // テキスト選択中はシーク動作をしない
           if (window.getSelection()?.toString()) return;
           e.preventDefault();
@@ -324,7 +324,8 @@ async function main() {
   // ポップアップで設定変更された場合はパラメータを更新
   if (isExtensionContextValid()) chrome.storage.onChanged.addListener((changes) => {
     if (changes.settings?.newValue) {
-      const s = changes.settings.newValue;
+      // storage の値は型情報を持たないため、保存時の型で受け直す
+      const s = changes.settings.newValue as UserSettings;
       queue.updateParams({
         speakerUuid: s.speakerUuid,
         styleId: s.styleId,
