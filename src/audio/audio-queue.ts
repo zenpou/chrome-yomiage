@@ -27,7 +27,7 @@ export class AudioQueue {
   private currentIndex = 0;
   private synthesizeParams: Omit<SynthesizeRequest, 'text'> | null = null;
   private voiceMap: VoiceMap = {};
-  private prefetchAhead = 2;
+  private prefetchAhead = 3;
   private _state: QueueState = 'idle';
   private stopRequested = false;
   private pauseRequested = false;
@@ -79,10 +79,7 @@ export class AudioQueue {
     const generation = ++this.playGeneration;
     this.setState('loading');
 
-    // Chrome TTSはプリフェッチ不要（リアルタイム合成）
-    if (!this.isChromeTtsMode) {
-      this.prefetch();
-    }
+    // 先読みは playEntryWithCoeiroink 側で開始する（Chrome TTSは不要）
     await this.playFrom(this.currentIndex, generation);
   }
 
@@ -233,10 +230,6 @@ export class AudioQueue {
       entry.state = 'done';
       this.onParagraphEnd?.(entry.paragraph);
       index++;
-
-      if (!this.isChromeTtsMode) {
-        this.prefetch();
-      }
     }
 
     if (!this.stopRequested && this.playGeneration === generation) {
@@ -268,6 +261,12 @@ export class AudioQueue {
   }
 
   private async playEntryWithCoeiroink(entry: QueueEntry, index: number): Promise<void> {
+    // 現在地を先に更新し、この段落の再生準備～再生中（＝合成サーバーへのネットワーク的な
+    // アイドル時間）を使って続きの段落を先読み合成しておく。これを再生完了後に呼ぶと
+    // 1段落分手遅れになり、次の段落開始時に合成待ちのウェイトが発生する。
+    this.currentIndex = index;
+    this.prefetch();
+
     // バッファが準備できるまで待機
     while (entry.state === 'fetching' || entry.state === 'pending') {
       if (this.stopRequested) return;
@@ -282,7 +281,6 @@ export class AudioQueue {
     if (!entry.audioData) return;
 
     entry.state = 'playing';
-    this.currentIndex = index;
     this.setState('playing');
     this.onParagraphStart?.(entry.paragraph);
 
