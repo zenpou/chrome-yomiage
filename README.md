@@ -1,6 +1,6 @@
-# 小説読み上げ（COEIROINK連携）
+# 小説読み上げ（COEIROINK / VOICEVOX連携）
 
-Web 小説サイトのテキストを COEIROINK または Chrome TTS で音声読み上げする Chrome 拡張機能。
+Web 小説サイトのテキストを COEIROINK・VOICEVOX・Chrome TTS で音声読み上げする Chrome 拡張機能。
 
 ## 対応サイト
 
@@ -15,7 +15,8 @@ Web 小説サイトのテキストを COEIROINK または Chrome TTS で音声�
 ## 機能
 
 - **COEIROINK 連携** — ローカルで動作する COEIROINK（localhost:50032）の TTS API を使って高品質な音声合成
-- **Chrome TTS フォールバック** — COEIROINK が不要な場合はブラウザ内蔵 TTS でも動作
+- **VOICEVOX 連携** — ローカルで動作する VOICEVOX（localhost:50021）にも対応。話者数が多く、役割別の声を割り当てやすい
+- **Chrome TTS フォールバック** — エンジンを入れたくない場合はブラウザ内蔵 TTS でも動作
 - **フローティング UI** — ページ右下に操作パネルを表示
   - ▶ 再生 / ⏸ 一時停止・再開 / ⏹ 停止
   - ⏪ 前の段落 / ⏩ 次の段落
@@ -31,8 +32,12 @@ Web 小説サイトのテキストを COEIROINK または Chrome TTS で音声�
 
 ## 必要なもの
 
-- [COEIROINK](https://coeiroink.com/)（ローカル起動、ポート 50032）※ Chrome TTS を使う場合は不要
 - Google Chrome
+- 音声合成エンジン（いずれか。Chrome TTS を使う場合は不要）
+  - [COEIROINK](https://coeiroink.com/)（ローカル起動、ポート 50032）
+  - [VOICEVOX](https://voicevox.hiroshiba.jp/)（ローカル起動、ポート 50021）
+
+どちらも無償で、生成した音声を配布しない範囲（自分で聞くだけの読み上げ）ならクレジット表記も不要。
 
 ## インストール
 
@@ -47,10 +52,13 @@ npm run build
 
 ## 使い方
 
-1. COEIROINK を起動する
-2. 拡張アイコンをクリックしてポップアップを開き、話者を選択して「設定を保存」
+1. COEIROINK または VOICEVOX を起動する
+2. 拡張アイコンをクリックしてポップアップを開き、エンジンのタブを選んで話者を選択し「設定を保存」
 3. 対応サイトの小説本文ページを開く
 4. 右下にフローティング UI が表示されるので ▶ ボタンで読み上げ開始
+
+VOICEVOX が「未接続」のままの場合、エンジン側が拡張機能からのアクセスを拒否している可能性がある。
+その際は VOICEVOX ENGINE を `--allow_origin chrome-extension://<拡張機能ID>` を付けて起動する。
 
 ## 開発
 
@@ -63,7 +71,7 @@ npm run build   # 本番ビルド（dist/ 出力）
 
 ```
 src/
-├── background/service-worker.ts   # COEIROINK API プロキシ
+├── background/service-worker.ts   # 合成エンジン API プロキシ（話者一覧のキャッシュ・合成の振り分け）
 ├── content/
 │   ├── index.ts                   # コンテントスクリプト本体
 │   ├── floating-ui.ts             # フローティング操作パネル（Shadow DOM）
@@ -80,10 +88,23 @@ src/
 │   ├── audio-queue.ts             # 再生キュー・先読みバッファリング
 │   ├── audio-player.ts            # Web Audio API ラッパー
 │   └── chrome-tts.ts              # Chrome TTS ラッパー
-├── api/coeiroink.ts               # COEIROINK REST API クライアント
+├── api/
+│   ├── tts-engine.ts              # エンジン定義と話者UUIDからの振り分け
+│   ├── synthesis-util.ts          # テキスト整形・分割・WAV結合・リトライ（エンジン共通）
+│   ├── coeiroink.ts               # COEIROINK REST API クライアント
+│   └── voicevox.ts                # VOICEVOX REST API クライアント
 ├── storage/settings.ts            # chrome.storage.local ラッパー
 └── types/                         # 型定義
 ```
+
+### 新しい合成エンジンへの対応方法
+
+1. `src/api/{エンジン名}.ts` に `fetchSpeakers()` と `synthesize()` を実装する
+   - テキストの整形・分割・WAV 結合は `synthesizeChunked()` に任せる
+   - 話者 UUID には他エンジンと衝突しない接頭辞を付ける（COEIROINK は互換性のため接頭辞なし）
+2. `src/api/tts-engine.ts` の `ENGINES` と `engineIdFor()` に追加する
+3. `public/manifest.json` の `host_permissions` にエンジンの URL を追加する
+4. `popup/index.html` にエンジンタブのボタンを追加し、`src/popup/popup.ts` の `tabs` に登録する
 
 ### 新しいサイトへの対応方法
 

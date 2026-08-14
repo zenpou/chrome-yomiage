@@ -1,6 +1,8 @@
 import { detectAdapter } from '../adapters/adapter-registry';
+import { ENGINES, ENGINE_IDS, engineIdFor } from '../api/tts-engine';
 import { AudioQueue, type VoiceMap } from '../audio/audio-queue';
 import { isChromeTts } from '../audio/chrome-tts';
+import type { Speaker } from '../types/coeiroink';
 import { FloatingUI } from './floating-ui';
 import { Highlighter } from './highlighter';
 import { assignRoles } from './voice-classifier';
@@ -130,7 +132,7 @@ async function main() {
   queue.onError = (p, err) => {
     console.error(`[yomiage] 段落${p.index}の音声生成エラー:`, err);
     if (err.message?.includes('Failed to fetch')) {
-      ui.showError('COEIROINKに接続できません');
+      ui.showError(`${ENGINES[engineIdFor(synthesizeParams.speakerUuid)].label}に接続できません`);
     } else {
       ui.showError(err.message);
     }
@@ -147,24 +149,19 @@ async function main() {
       loadSettings().then(async (latestSettings) => {
         let { speakerUuid, styleId } = latestSettings;
 
-        // 話者未設定の場合、COEIROINKから最初の話者を自動取得
+        // 話者未設定の場合、起動しているエンジンから最初の話者を自動取得
         if (!speakerUuid) {
-          try {
-            const res = await chrome.runtime.sendMessage({ type: 'GET_SPEAKERS' });
-            if (!res.error && res.speakers?.length > 0) {
-              speakerUuid = res.speakers[0].speakerUuid;
-              styleId = res.speakers[0].styles[0]?.styleId ?? 0;
-              ui.showInfo(`話者未設定のため「${res.speakers[0].speakerName}」で読み上げます`);
-            } else {
-              ui.showError('話者を取得できません。拡張アイコンから設定してください');
-              ui.setState('idle');
-              return;
-            }
-          } catch {
-            ui.showError('COEIROINKに接続できません');
+          const speaker = await findFirstAvailableSpeaker();
+          if (!speaker) {
+            ui.showError(
+              `${ENGINE_IDS.map((id) => ENGINES[id].label).join(' / ')}に接続できません`,
+            );
             ui.setState('idle');
             return;
           }
+          speakerUuid = speaker.speakerUuid;
+          styleId = speaker.styles[0]?.styleId ?? 0;
+          ui.showInfo(`話者未設定のため「${speaker.speakerName}」で読み上げます`);
         }
 
         synthesizeParams = {
@@ -346,6 +343,19 @@ async function main() {
       ui.setSpeed(s.speedScale);
     }
   });
+}
+
+/** 話者未設定時に、起動しているエンジンから最初の話者を1つ探す */
+async function findFirstAvailableSpeaker(): Promise<Speaker | null> {
+  for (const engine of ENGINE_IDS) {
+    try {
+      const res = await chrome.runtime.sendMessage({ type: 'GET_SPEAKERS', engine });
+      if (!res.error && res.speakers?.length > 0) return res.speakers[0] as Speaker;
+    } catch {
+      // このエンジンは起動していない。次を試す
+    }
+  }
+  return null;
 }
 
 main().catch(console.error);

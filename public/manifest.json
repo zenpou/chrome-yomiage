@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "小説読み上げ（COEIROINK連携）",
+  "name": "小説読み上げ（COEIROINK / VOICEVOX連携）",
   "version": "1.0.0",
-  "description": "COEIROINKを使って小説サイトのテキストを音声読み上げします",
+  "description": "COEIROINK・VOICEVOXを使って小説サイトのテキストを音声読み上げします",
 
   "icons": {
     "16": "icons/icon16.png",
@@ -42,7 +42,8 @@
   ],
 
   "host_permissions": [
-    "http://localhost:50032/*"
+    "http://localhost:50032/*",
+    "http://localhost:50021/*"
   ],
 
   "web_accessible_resources": [

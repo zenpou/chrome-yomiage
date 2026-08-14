@@ -1,10 +1,24 @@
 import './popup.css';
 import { loadSettings, saveSettings } from '../storage/settings';
 import { CHROME_TTS_PREFIX } from '../audio/chrome-tts';
+import { ENGINES, ENGINE_IDS, engineIdFor, type EngineId } from '../api/tts-engine';
 import type { Speaker } from '../types/coeiroink';
 import type { RoleVoice } from '../types/settings';
 
-type Engine = 'coeiroink' | 'chrome';
+/** Chrome TTS は合成サーバーを持たないので EngineId とは別枠 */
+type Engine = EngineId | 'chrome';
+
+type ConnectionState = 'connected' | 'disconnected';
+
+/**
+ * 話者UUIDから表示するタブを決める。
+ * 未設定のときは、インストール不要で必ず動く Chrome TTS を初期表示にする。
+ * （合成時の振り分けは engineIdFor 側の既定＝COEIROINK のままで、既存設定との互換を保つ）
+ */
+function engineOf(speakerUuid: string): Engine {
+  if (!speakerUuid || speakerUuid.startsWith(CHROME_TTS_PREFIX)) return 'chrome';
+  return engineIdFor(speakerUuid);
+}
 
 async function init() {
   const connectionEl = document.getElementById('connection-status')!;
@@ -22,9 +36,13 @@ async function init() {
   const intonationVal = document.getElementById('intonation-val')!;
   const saveBtn = document.getElementById('save-btn') as HTMLButtonElement;
   const saveStatus = document.getElementById('save-status')!;
-  const tabCoeiroink = document.getElementById('engine-coeiroink') as HTMLButtonElement;
-  const tabChrome = document.getElementById('engine-chrome') as HTMLButtonElement;
   const roleVoicesSection = document.getElementById('role-voices-section')!;
+
+  const tabs: Record<Engine, HTMLButtonElement> = {
+    coeiroink: document.getElementById('engine-coeiroink') as HTMLButtonElement,
+    voicevox: document.getElementById('engine-voicevox') as HTMLButtonElement,
+    chrome: document.getElementById('engine-chrome') as HTMLButtonElement,
+  };
 
   // スライダーの値表示
   speedInput.addEventListener('input', () => { speedVal.textContent = Number(speedInput.value).toFixed(1); });
@@ -42,61 +60,41 @@ async function init() {
   pitchVal.textContent = settings.pitchScale.toFixed(2);
   intonationInput.value = String(settings.intonationScale);
   intonationVal.textContent = settings.intonationScale.toFixed(1);
+
   // 現在のエンジンを判定
-  const savedEngine: Engine = settings.speakerUuid.startsWith(CHROME_TTS_PREFIX) ? 'chrome' : 'coeiroink';
+  const savedEngine = engineOf(settings.speakerUuid);
   let currentEngine: Engine = savedEngine;
 
-  // COEIROINK話者一覧・Chrome TTS音声一覧を並行取得
-  const [speakers, chromeTtsVoices] = await Promise.all([
-    fetchCoeiroinkSpeakers(connectionEl),
+  // 各エンジンの話者一覧を並行取得（起動していないエンジンは空配列になる）
+  const speakersByEngine = {} as Record<EngineId, Speaker[]>;
+  const connectionByEngine = {} as Record<EngineId, ConnectionState>;
+  const [, chromeTtsVoices] = await Promise.all([
+    Promise.all(ENGINE_IDS.map(async (id) => {
+      const { speakers, connected } = await fetchEngineSpeakers(id);
+      speakersByEngine[id] = speakers;
+      connectionByEngine[id] = connected ? 'connected' : 'disconnected';
+    })),
     getChromeTtsVoices(),
   ]);
 
-  // エンジン切り替え処理
-  const switchEngine = (engine: Engine) => {
-    currentEngine = engine;
-    tabCoeiroink.classList.toggle('active', engine === 'coeiroink');
-    tabChrome.classList.toggle('active', engine === 'chrome');
+  /** 現在のエンジンの話者一覧（Chrome TTS のときは空） */
+  const speakersOf = (engine: Engine): Speaker[] =>
+    engine === 'chrome' ? [] : speakersByEngine[engine];
 
-    if (engine === 'coeiroink') {
-      connectionEl.style.display = '';
-      styleSection.classList.remove('hidden');
-      intonationSection.classList.remove('hidden');
-      roleVoicesSection.classList.remove('hidden');
-      renderCoeiroinkSpeakers(speakers, speakerSel);
-      updateStyles(speakerSel.value);
-    } else {
-      connectionEl.style.display = 'none';
-      styleSection.classList.add('hidden');
-      intonationSection.classList.add('hidden');
-      roleVoicesSection.classList.add('hidden');
-      renderChromeTtsSpeakers(chromeTtsVoices, speakerSel);
-    }
-  };
-
-  tabCoeiroink.addEventListener('click', () => switchEngine('coeiroink'));
-  tabChrome.addEventListener('click', () => switchEngine('chrome'));
-
-  // 話者変更時にCOEIROINKのスタイル一覧を更新
-  speakerSel.addEventListener('change', () => {
-    if (currentEngine === 'coeiroink') {
-      updateStyles(speakerSel.value);
-    }
-  });
-
-  const updateStyles = (speakerUuid: string) => {
+  const updateStyles = (engine: Engine, speakerUuid: string, selectedStyleId?: number) => {
     styleSel.innerHTML = '';
-    const speaker = speakers.find((s) => s.speakerUuid === speakerUuid);
-    if (speaker) {
-      speaker.styles.forEach((st) => {
-        styleSel.add(new Option(st.styleName, String(st.styleId)));
-      });
-    } else {
+    const speaker = speakersOf(engine).find((s) => s.speakerUuid === speakerUuid);
+    if (!speaker) {
       styleSel.add(new Option('-', '0'));
+      return;
     }
+    speaker.styles.forEach((st) => {
+      styleSel.add(new Option(st.styleName, String(st.styleId)));
+    });
+    if (selectedStyleId !== undefined) styleSel.value = String(selectedStyleId);
   };
 
-  // 役割別音声（会話文1/会話文2/心の声）のセレクトを構築
+  // 役割別音声（会話文1/会話文2/心の声）のセレクト
   const roleSelects = ([
     { key: 'dialogue1Voice', speakerId: 'role-d1-speaker', styleId: 'role-d1-style', fallbackLabel: '全般と同じ' },
     { key: 'dialogue2Voice', speakerId: 'role-d2-speaker', styleId: 'role-d2-style', fallbackLabel: '会話文1と同じ' },
@@ -108,53 +106,95 @@ async function init() {
     fallbackLabel: def.fallbackLabel,
   }));
 
-  const updateRoleStyles = (speakerSel: HTMLSelectElement, styleSel: HTMLSelectElement, selectedStyleId?: number) => {
-    styleSel.innerHTML = '';
-    const speaker = speakers.find((s) => s.speakerUuid === speakerSel.value);
+  const updateRoleStyles = (
+    engine: Engine,
+    sel: HTMLSelectElement,
+    roleStyleSel: HTMLSelectElement,
+    selectedStyleId?: number,
+  ) => {
+    roleStyleSel.innerHTML = '';
+    const speaker = speakersOf(engine).find((s) => s.speakerUuid === sel.value);
     if (!speaker) {
-      styleSel.add(new Option('-', '0'));
-      styleSel.disabled = true;
+      roleStyleSel.add(new Option('-', '0'));
+      roleStyleSel.disabled = true;
       return;
     }
-    styleSel.disabled = false;
+    roleStyleSel.disabled = false;
     speaker.styles.forEach((st) => {
-      styleSel.add(new Option(st.styleName, String(st.styleId)));
+      roleStyleSel.add(new Option(st.styleName, String(st.styleId)));
     });
-    if (selectedStyleId !== undefined) styleSel.value = String(selectedStyleId);
+    if (selectedStyleId !== undefined) roleStyleSel.value = String(selectedStyleId);
   };
 
-  roleSelects.forEach(({ key, speakerSel: sel, styleSel, fallbackLabel }) => {
-    sel.innerHTML = '';
-    sel.add(new Option(fallbackLabel, ''));
-    speakers.forEach((s) => sel.add(new Option(s.speakerName, s.speakerUuid)));
-    const saved = settings[key];
-    if (saved?.speakerUuid) sel.value = saved.speakerUuid;
-    updateRoleStyles(sel, styleSel, saved?.styleId);
-    sel.addEventListener('change', () => updateRoleStyles(sel, styleSel));
+  const renderRoleVoices = (engine: Engine) => {
+    roleSelects.forEach(({ key, speakerSel: sel, styleSel: roleStyleSel, fallbackLabel }) => {
+      sel.innerHTML = '';
+      sel.add(new Option(fallbackLabel, ''));
+      speakersOf(engine).forEach((s) => sel.add(new Option(s.speakerName, s.speakerUuid)));
+      // 保存済みの役割別音声は、同じエンジンの話者のときだけ復元する
+      const saved = settings[key];
+      const restorable = !!saved?.speakerUuid && engineOf(saved.speakerUuid) === engine;
+      if (restorable) sel.value = saved!.speakerUuid;
+      updateRoleStyles(engine, sel, roleStyleSel, restorable ? saved!.styleId : undefined);
+    });
+  };
+
+  roleSelects.forEach(({ speakerSel: sel, styleSel: roleStyleSel }) => {
+    sel.addEventListener('change', () => updateRoleStyles(currentEngine, sel, roleStyleSel));
   });
 
-  // 初期エンジンで表示（保存済み設定を復元）
-  switchEngine(savedEngine);
+  // エンジン切り替え処理
+  const switchEngine = (engine: Engine) => {
+    currentEngine = engine;
+    (Object.keys(tabs) as Engine[]).forEach((id) => {
+      tabs[id].classList.toggle('active', id === engine);
+    });
 
-  // 保存済み話者を選択
-  if (settings.speakerUuid) {
-    speakerSel.value = settings.speakerUuid;
-    if (savedEngine === 'coeiroink') {
-      updateStyles(settings.speakerUuid);
-      styleSel.value = String(settings.styleId);
+    if (engine === 'chrome') {
+      connectionEl.style.display = 'none';
+      styleSection.classList.add('hidden');
+      intonationSection.classList.add('hidden');
+      roleVoicesSection.classList.add('hidden');
+      renderChromeTtsSpeakers(chromeTtsVoices, speakerSel);
+    } else {
+      connectionEl.style.display = '';
+      setConnectionBadge(connectionEl, engine, connectionByEngine[engine]);
+      styleSection.classList.remove('hidden');
+      intonationSection.classList.remove('hidden');
+      roleVoicesSection.classList.remove('hidden');
+      renderSpeakers(speakersOf(engine), ENGINES[engine].label, speakerSel);
+      renderRoleVoices(engine);
     }
-  }
+
+    // 保存済みのエンジンに戻ってきたときだけ、保存された話者・スタイルを復元する
+    const savedSpeaker = engineOf(settings.speakerUuid) === engine ? settings.speakerUuid : '';
+    if (savedSpeaker) speakerSel.value = savedSpeaker;
+    if (engine !== 'chrome') {
+      updateStyles(engine, speakerSel.value, savedSpeaker ? settings.styleId : undefined);
+    }
+  };
+
+  (Object.keys(tabs) as Engine[]).forEach((id) => {
+    tabs[id].addEventListener('click', () => switchEngine(id));
+  });
+
+  // 話者変更時にスタイル一覧を更新
+  speakerSel.addEventListener('change', () => {
+    if (currentEngine !== 'chrome') updateStyles(currentEngine, speakerSel.value);
+  });
+
+  switchEngine(savedEngine);
 
   // 設定保存
   saveBtn.addEventListener('click', async () => {
     const speakerUuid = speakerSel.value;
-    const styleId = currentEngine === 'coeiroink' ? Number(styleSel.value) || 0 : 0;
+    const styleId = currentEngine === 'chrome' ? 0 : Number(styleSel.value) || 0;
 
-    // 役割別音声を読み取る（COEIROINK話者が取得できない時は保存済み設定を維持）
+    // 役割別音声を読み取る（Chrome TTSは非対応。話者一覧を取得できない時は保存済み設定を維持）
     const readRoleVoice = (i: number, saved: RoleVoice | null): RoleVoice | null => {
-      if (currentEngine !== 'coeiroink' || speakers.length === 0) return saved;
-      const { speakerSel: sel, styleSel: sSel } = roleSelects[i];
-      return sel.value ? { speakerUuid: sel.value, styleId: Number(sSel.value) || 0 } : null;
+      if (currentEngine === 'chrome' || speakersOf(currentEngine).length === 0) return saved;
+      const { speakerSel: sel, styleSel: roleStyleSel } = roleSelects[i];
+      return sel.value ? { speakerUuid: sel.value, styleId: Number(roleStyleSel.value) || 0 } : null;
     };
 
     await saveSettings({
@@ -181,10 +221,20 @@ async function init() {
   });
 }
 
-function renderCoeiroinkSpeakers(speakers: Speaker[], sel: HTMLSelectElement) {
+function setConnectionBadge(el: HTMLElement, engine: EngineId, state: ConnectionState) {
+  if (state === 'connected') {
+    el.textContent = '接続中 ✓';
+    el.className = 'status-badge connected';
+  } else {
+    el.textContent = `${ENGINES[engine].label} 未接続`;
+    el.className = 'status-badge disconnected';
+  }
+}
+
+function renderSpeakers(speakers: Speaker[], engineLabel: string, sel: HTMLSelectElement) {
   sel.innerHTML = '';
   if (speakers.length === 0) {
-    sel.add(new Option('話者なし（COEIROINKを起動してください）', ''));
+    sel.add(new Option(`話者なし（${engineLabel}を起動してください）`, ''));
     return;
   }
   speakers.forEach((s) => sel.add(new Option(s.speakerName, s.speakerUuid)));
@@ -202,17 +252,15 @@ function renderChromeTtsSpeakers(voices: SpeechSynthesisVoice[], sel: HTMLSelect
   });
 }
 
-async function fetchCoeiroinkSpeakers(statusEl: HTMLElement): Promise<Speaker[]> {
+async function fetchEngineSpeakers(
+  engine: EngineId,
+): Promise<{ speakers: Speaker[]; connected: boolean }> {
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'GET_SPEAKERS' });
+    const response = await chrome.runtime.sendMessage({ type: 'GET_SPEAKERS', engine });
     if (response.error) throw new Error(response.error);
-    statusEl.textContent = '接続中 ✓';
-    statusEl.className = 'status-badge connected';
-    return response.speakers as Speaker[];
+    return { speakers: response.speakers as Speaker[], connected: true };
   } catch {
-    statusEl.textContent = '未接続';
-    statusEl.className = 'status-badge disconnected';
-    return [];
+    return { speakers: [], connected: false };
   }
 }
 

@@ -5,8 +5,8 @@ export default defineConfig({
   base: './',
   build: {
     rollupOptions: {
+      // Service Workerは vite.sw.config.ts で単体ビルドする（chunks/への切り出しを避けるため）
       input: {
-        'background/service-worker': resolve(__dirname, 'src/background/service-worker.ts'),
         'popup/index': resolve(__dirname, 'popup/index.html'),
       },
       output: {
