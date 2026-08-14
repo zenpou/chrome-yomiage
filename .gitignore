@@ -1,5 +1,6 @@
 node_modules/
 dist/
+*.zip
 *.wav
 speakers.json
 test_*.json
