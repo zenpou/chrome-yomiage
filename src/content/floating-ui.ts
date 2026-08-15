@@ -227,7 +227,6 @@ export class FloatingUI {
   private shadow: ShadowRoot;
   private playBtn!: HTMLButtonElement;
   private pauseBtn!: HTMLButtonElement;
-  private stopBtn!: HTMLButtonElement;
   private prevParaBtn!: HTMLButtonElement;
   private nextParaBtn!: HTMLButtonElement;
   private prevChapterBtn!: HTMLButtonElement;
@@ -246,7 +245,6 @@ export class FloatingUI {
 
   onPlay?: () => void;
   onPause?: () => void;
-  onStop?: () => void;
   onPrevParagraph?: () => void;
   onNextParagraph?: () => void;
   onPrevChapter?: () => void;
@@ -281,7 +279,6 @@ export class FloatingUI {
 
     this.playBtn.disabled = isPlaying || isLoading;
     this.pauseBtn.disabled = isIdle || isLoading;
-    this.stopBtn.disabled = isIdle;
     this.prevParaBtn.disabled = isIdle || isLoading;
     this.nextParaBtn.disabled = isIdle || isLoading;
 
@@ -355,7 +352,6 @@ export class FloatingUI {
           <button class="btn btn-para btn-prev-para" title="前の段落" disabled>⏪</button>
           <button class="btn btn-play" title="再生">▶</button>
           <button class="btn btn-pause" title="一時停止/再開" disabled>⏸</button>
-          <button class="btn btn-stop" title="停止" disabled>⏹</button>
           <button class="btn btn-para btn-next-para" title="次の段落" disabled>⏩</button>
           <div class="separator"></div>
           <button class="btn btn-chapter btn-next-chapter" title="次話">⏭</button>
@@ -396,7 +392,6 @@ export class FloatingUI {
 
     this.playBtn = this.shadow.querySelector('.btn-play') as HTMLButtonElement;
     this.pauseBtn = this.shadow.querySelector('.btn-pause') as HTMLButtonElement;
-    this.stopBtn = this.shadow.querySelector('.btn-stop') as HTMLButtonElement;
     this.prevParaBtn = this.shadow.querySelector('.btn-prev-para') as HTMLButtonElement;
     this.nextParaBtn = this.shadow.querySelector('.btn-next-para') as HTMLButtonElement;
     this.prevChapterBtn = this.shadow.querySelector('.btn-prev-chapter') as HTMLButtonElement;
@@ -417,7 +412,6 @@ export class FloatingUI {
   private bindEvents(): void {
     this.playBtn.addEventListener('click', () => this.onPlay?.());
     this.pauseBtn.addEventListener('click', () => this.onPause?.());
-    this.stopBtn.addEventListener('click', () => this.onStop?.());
     this.prevParaBtn.addEventListener('click', () => this.onPrevParagraph?.());
     this.nextParaBtn.addEventListener('click', () => this.onNextParagraph?.());
     this.prevChapterBtn.addEventListener('click', () => this.onPrevChapter?.());

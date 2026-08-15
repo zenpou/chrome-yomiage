@@ -7,7 +7,6 @@
 export interface MediaSessionCallbacks {
   onPlay: () => void;
   onPause: () => void;
-  onStop: () => void;
   onPrevTrack: () => void;
   onNextTrack: () => void;
 }
@@ -53,7 +52,8 @@ export function setupMediaSession(callbacks: MediaSessionCallbacks): void {
 
   navigator.mediaSession.setActionHandler('play', callbacks.onPlay);
   navigator.mediaSession.setActionHandler('pause', callbacks.onPause);
-  navigator.mediaSession.setActionHandler('stop', callbacks.onStop);
+  // 停止は割り当てない。誤操作で読んでいた位置が失われるため、一時停止だけを提供する
+  navigator.mediaSession.setActionHandler('stop', null);
   navigator.mediaSession.setActionHandler('previoustrack', callbacks.onPrevTrack);
   navigator.mediaSession.setActionHandler('nexttrack', callbacks.onNextTrack);
 }

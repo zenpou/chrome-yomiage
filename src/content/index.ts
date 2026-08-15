@@ -89,7 +89,6 @@ async function main() {
   setupMediaSession({
     onPlay: () => { if (!seekInProgress) ui.onPlay?.(); },
     onPause: () => ui.onPause?.(),
-    onStop: () => ui.onStop?.(),
     onNextTrack: () => ui.onNextParagraph?.(),
     onPrevTrack: () => ui.onPrevParagraph?.(),
   });
@@ -191,11 +190,6 @@ async function main() {
     } else if (queue.state === 'paused') {
       queue.resume();
     }
-  };
-
-  ui.onStop = () => {
-    queue.stop();
-    highlighter.clearAll();
   };
 
   ui.onPrevParagraph = () => {
