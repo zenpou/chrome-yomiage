@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>小説読み上げ — 使い方</title>
-<meta name="description" content="Chrome拡張「小説読み上げ」の使い方。インストール不要ですぐ使えます。音質を上げたい人向けに VOICEVOX / COEIROINK との連携も説明します。">
+<meta name="description" content="Chrome拡張「小説読み上げ」の使い方。Chrome内蔵の音声のほか、VOICEVOX / COEIROINK とも連携して Web小説を読み上げます。">
 <style>
   :root {
     --bg: #ffffff;
@@ -13,9 +13,6 @@
     --border: #e2e5ea;
     --card: #f7f8fa;
     --accent: #1565c0;
-    --info-bg: #eaf2fb;
-    --info-border: #a9c9ea;
-    --info-fg: #14406e;
     --warn-bg: #fff8e1;
     --warn-border: #f0c36d;
     --warn-fg: #6b4e00;
@@ -29,9 +26,6 @@
       --border: #2c3038;
       --card: #1e2128;
       --accent: #4a9eff;
-      --info-bg: #14212e;
-      --info-border: #2c5580;
-      --info-fg: #a9cef0;
       --warn-bg: #2e2410;
       --warn-border: #6b5420;
       --warn-fg: #f0d089;
@@ -69,16 +63,6 @@
   p { margin: 0 0 16px; }
   a { color: var(--accent); }
 
-  .lead {
-    font-size: 1.05rem;
-    background: var(--info-bg);
-    border: 1px solid var(--info-border);
-    color: var(--info-fg);
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin: 0 0 32px;
-  }
-  .lead p:last-child { margin-bottom: 0; }
 
   .note {
     background: var(--warn-bg);
@@ -143,15 +127,11 @@
   <p>Web小説を音声で読み上げる Chrome 拡張機能</p>
 </header>
 
-<div class="lead">
-  <p>
-    <b>追加のインストールは不要です。</b>拡張機能を入れて声を選べば、すぐに読み上げが始まります。
-    Chrome に最初から入っている音声を使うので、他に用意するものはありません。
-  </p>
-  <p>
-    音質にこだわりたくなったら、あとから <b>VOICEVOX</b> や <b>COEIROINK</b> を入れて切り替えられます。どちらも無償です。
-  </p>
-</div>
+<p>
+  読み上げには3つの音声エンジンが使えます。
+  Chrome に最初から入っている音声なら、何もインストールせずに使えます。
+  <b>VOICEVOX</b> や <b>COEIROINK</b> をインストールすれば、そちらの声も使えます。どちらも無償です。
+</p>
 
 <h2>まず使ってみる</h2>
 
@@ -189,17 +169,16 @@
   イヤホンの再生ボタンでも操作できます。
 </p>
 
-<h2>音質を上げる（任意）</h2>
+<h2>VOICEVOX / COEIROINK を使う</h2>
 
 <p>
-  Chrome 内蔵の音声は手軽ですが、長い小説を聴き続けると平坦さが気になってきます。
-  そこで <b>VOICEVOX</b> か <b>COEIROINK</b> を入れると、ぐっと自然な読み上げになります。
+  どちらもパソコン上で動く無償の音声合成ソフトです。
+  Chrome 内蔵の音声より自然で、話者の数も多くなります。
 </p>
 
 <p>
-  どちらもパソコン上で動く無償のソフトです。
   拡張機能とは別にインストールして、<b>読み上げ中は起動しておく</b>必要があります。
-  インストーラは 1GB を超えるので、そこだけ許容できるかどうかです。
+  インストーラは 1GB を超えます。
 </p>
 
 <div class="table-wrap">
