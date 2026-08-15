@@ -138,11 +138,22 @@ body {
   margin: 12px 0;
 }
 
+/*
+ * 設定項目が多くポップアップは縦スクロールする。保存ボタンが初期表示で
+ * 見えないと「タブを切り替えただけで反映される」と誤解されるため、
+ * スクロール位置によらず常に下端に貼り付ける。
+ * 左右のマージンは .container の padding を打ち消して背景を端まで伸ばす。
+ */
 .footer {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 14px;
+  position: sticky;
+  bottom: 0;
+  margin: 14px -14px -14px;
+  padding: 10px 14px;
+  background: #1e1e1e;
+  border-top: 1px solid #333;
 }
 
 .btn-save {
@@ -173,6 +184,20 @@ body {
 
 .save-status.visible {
   opacity: 1;
+}
+
+/* 導入ガイドへの誘導。フッター右端に寄せる */
+.help-link {
+  margin-left: auto;
+  font-size: 11px;
+  color: #7aa7d9;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.help-link:hover {
+  color: #a5c8ec;
+  text-decoration: underline;
 }
 
 .toggle-label {
