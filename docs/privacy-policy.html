@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小説読み上げ — プライバシーポリシー</title>
+<meta name="description" content="Chrome拡張「小説読み上げ（COEIROINK / VOICEVOX連携）」のプライバシーポリシー。開発者が運営するサーバーはなく、個人情報の収集・送信は行いません。">
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #5c6370;
+    --border: #e2e5ea;
+    --card: #f7f8fa;
+    --accent: #1565c0;
+    --warn-bg: #fff8e1;
+    --warn-border: #f0c36d;
+    --warn-fg: #6b4e00;
+    --code-bg: #f0f2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181d;
+      --fg: #e4e6eb;
+      --muted: #9aa3b2;
+      --border: #2c3038;
+      --card: #1e2128;
+      --accent: #4a9eff;
+      --warn-bg: #2e2410;
+      --warn-border: #6b5420;
+      --warn-fg: #f0d089;
+      --code-bg: #23262d;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0 20px 80px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+    line-height: 1.75;
+    font-size: 16px;
+  }
+  main { max-width: 720px; margin: 0 auto; }
+
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+  h1 { font-size: 1.9rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--muted); }
+
+  h2 {
+    font-size: 1.3rem;
+    margin: 48px 0 16px;
+    padding-top: 8px;
+    letter-spacing: -0.01em;
+  }
+  h3 { font-size: 1.05rem; margin: 28px 0 10px; }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); }
+
+  .note {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-fg);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 0 0 24px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  .table-wrap { overflow-x: auto; margin: 0 0 20px; }
+  table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: 0.95rem; }
+  th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--card); font-weight: 600; }
+
+  ol, ul { margin: 0 0 16px; padding-left: 1.5em; }
+  li { margin-bottom: 8px; }
+
+  code {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.9em;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin: 0 0 20px;
+  }
+  .card h3 { margin-top: 0; }
+  .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
+
+  .lang-divider {
+    margin-top: 72px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>プライバシーポリシー</h1>
+  <p>小説読み上げ（COEIROINK / VOICEVOX連携）　—　最終更新日: 2026年8月15日</p>
+</header>
+
+<p>
+  本拡張機能は、開発者が運営するサーバーを一切保有していません。
+  利用者の個人情報を収集・送信・販売・第三者提供することはありません。
+  解析ツールやトラッキングの類も組み込んでいません。
+</p>
+
+<h2>取り扱うデータ</h2>
+
+<h3>1. ウェブサイトのコンテンツ（小説の本文）</h3>
+
+<p>
+  対応サイトの本文ページを開いたとき、読み上げ対象となる段落のテキストをページから読み取ります。
+  読み取ったテキストは、<b>利用者が再生を開始したときにのみ</b>、音声合成のために送信されます。
+  送信先は選択したエンジンによって異なります。
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>エンジン</th><th>送信先</th><th>端末外への送信</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>VOICEVOX</th><td><code>http://localhost:50021</code>（利用者自身のPC上）</td><td>なし</td></tr>
+    <tr><th>COEIROINK</th><td><code>http://localhost:50032</code>（利用者自身のPC上）</td><td>なし</td></tr>
+    <tr><th>Chrome内蔵音声</th><td>ブラウザ内蔵の音声合成機能（Web Speech API）</td><td>音声の種類により発生する場合あり</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  VOICEVOX および COEIROINK は利用者自身のPC上で動作するソフトウェアです。
+  テキストは端末内で完結し、インターネット上へは送信されません。
+</p>
+
+<div class="note">
+  <p>
+    <b>Chrome内蔵音声を選択した場合について。</b>
+    テキストはブラウザ内蔵の音声合成機能へ渡されます。
+    音声の種類によっては、Chrome がテキストを Google のサーバー上で処理することがあります。
+    これは Chrome 自体の仕様であり、本拡張機能の制御下にはありません。
+    読み上げを端末内で完結させたい場合は、VOICEVOX または COEIROINK をご利用ください。
+  </p>
+</div>
+
+<p>
+  読み取った本文テキストを保存・蓄積することはありません。
+  再生のために一時的にメモリ上へ保持するのみで、ページを離れると破棄されます。
+</p>
+
+<h3>2. 設定情報</h3>
+
+<p>以下の設定を <code>chrome.storage.local</code> に保存します。</p>
+
+<ul>
+  <li>音声合成エンジンの選択、話者、スタイル</li>
+  <li>速度、音量、ピッチ、抑揚などの音声パラメータ</li>
+  <li>会話文・心の声に割り当てる声</li>
+  <li>本文クリックでシーク、次話への自動移動、自動スクロールの各設定</li>
+</ul>
+
+<p>
+  これらは利用者の端末内にのみ保存され、外部へ送信されることはありません。
+  拡張機能を削除すると同時に削除されます。
+</p>
+
+<h3>3. ページ内の一時フラグ</h3>
+
+<p>
+  「最終段落まで読み終えたら自動で次話へ移動」を有効にしている場合、
+  ページ遷移後に再生を継続するためのフラグを、対象ページの <code>sessionStorage</code> に一時的に保存します。
+  タブを閉じると破棄されます。
+</p>
+
+<h2>収集しない情報</h2>
+
+<ul>
+  <li>氏名、メールアドレス、その他の個人を識別できる情報</li>
+  <li>認証情報、パスワード、決済情報</li>
+  <li>閲覧履歴、位置情報、端末識別子</li>
+  <li>利用状況の統計・解析データ</li>
+</ul>
+
+<h2>権限の利用目的</h2>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>権限</th><th>目的</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>storage</code></td><td>上記「設定情報」を端末内に保存するため</td></tr>
+    <tr><td><code>http://localhost:50021/*</code></td><td>利用者自身のPC上で動作する VOICEVOX へ音声合成を要求するため</td></tr>
+    <tr><td><code>http://localhost:50032/*</code></td><td>利用者自身のPC上で動作する COEIROINK へ音声合成を要求するため</td></tr>
+    <tr><td>対応サイトへのアクセス</td><td>本文テキストの抽出と、操作パネルの表示のため</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>対応サイトは以下に限定されており、それ以外のサイトでは動作しません。</p>
+
+<ul>
+  <li><code>syosetu.org</code>（ハーメルン）</li>
+  <li><code>kakuyomu.jp</code>（カクヨム）</li>
+  <li><code>ncode.syosetu.com</code>（小説家になろう）</li>
+  <li><code>novel18.syosetu.com</code>（ノクターンノベルズ）</li>
+  <li><code>www.alphapolis.co.jp</code>（アルファポリス）</li>
+</ul>
+
+<h2>第三者への提供</h2>
+
+<p>
+  一切行いません。本拡張機能は、開発者を含むいかなる第三者に対してもデータを送信しません。
+</p>
+
+<h2>リモートコードの実行</h2>
+
+<p>
+  本拡張機能は外部からコードを読み込みません。動作に必要なコードはすべてパッケージに同梱されています。
+</p>
+
+<h2>本ポリシーの変更</h2>
+
+<p>
+  内容を変更する場合は、本ページを更新し、最終更新日を改めます。
+</p>
+
+<h2>免責</h2>
+
+<p>
+  本拡張機能は非公式であり、VOICEVOX、COEIROINK、および対応する各小説投稿サイトの運営者とは一切関係がありません。
+</p>
+
+<h2>お問い合わせ</h2>
+
+<p>
+  本拡張機能に関するお問い合わせは、
+  <a href="mailto:contact@maenohou.com">contact@maenohou.com</a> までご連絡ください。
+</p>
+
+<div class="lang-divider"></div>
+
+<header>
+  <h1>Privacy Policy</h1>
+  <p>Novel Text-to-Speech (COEIROINK / VOICEVOX)　—　Last updated: August 15, 2026</p>
+</header>
+
+<p>
+  This extension has no developer-operated server. It does not collect, transmit, sell, or share
+  any personal information. It contains no analytics or tracking code.
+</p>
+
+<h2>Data handled</h2>
+
+<h3>Website content (novel text)</h3>
+
+<p>
+  When you open a chapter page on a supported site, the extension reads the paragraph text from the page.
+  That text is sent for speech synthesis <b>only when you press play</b>:
+</p>
+
+<ul>
+  <li><b>VOICEVOX</b> — <code>http://localhost:50021</code>, running on your own computer. Nothing leaves your device.</li>
+  <li><b>COEIROINK</b> — <code>http://localhost:50032</code>, running on your own computer. Nothing leaves your device.</li>
+  <li><b>Chrome built-in voices</b> — the browser's Web Speech API. Depending on the selected voice, Chrome may
+    process the text on Google servers. This is Chrome's own behavior and is outside this extension's control.
+    Use VOICEVOX or COEIROINK if you need everything to stay on-device.</li>
+</ul>
+
+<p>
+  The text is never stored or accumulated. It is held in memory only for playback and discarded when you leave the page.
+</p>
+
+<h3>Settings</h3>
+
+<p>
+  Engine, speaker, style, speed, volume, pitch, intonation, per-role voices, and the behavior toggles are stored in
+  <code>chrome.storage.local</code> on your device only. They are removed when you uninstall the extension.
+</p>
+
+<h3>Temporary page flag</h3>
+
+<p>
+  When "automatically continue to the next chapter" is enabled, a flag is written to the page's
+  <code>sessionStorage</code> so playback can resume after navigation. It is discarded when the tab closes.
+</p>
+
+<h2>Not collected</h2>
+
+<p>
+  Personally identifiable information, credentials, payment data, browsing history, location,
+  device identifiers, or usage analytics.
+</p>
+
+<h2>Permissions</h2>
+
+<ul>
+  <li><code>storage</code> — save the settings listed above on your device.</li>
+  <li><code>http://localhost:50021/*</code> — send synthesis requests to VOICEVOX running on your own computer.</li>
+  <li><code>http://localhost:50032/*</code> — send synthesis requests to COEIROINK running on your own computer.</li>
+  <li>Host access to the supported novel sites — extract chapter text and render the playback panel.
+    The extension does not run on any other site.</li>
+</ul>
+
+<h2>Third parties</h2>
+
+<p>None. No data is transmitted to any third party, including the developer.</p>
+
+<h2>Remote code</h2>
+
+<p>None. All executable code is bundled in the package.</p>
+
+<h2>Disclaimer</h2>
+
+<p>
+  This is an unofficial extension. It is not affiliated with VOICEVOX, COEIROINK,
+  or any of the supported novel sites.
+</p>
+
+<h2>Contact</h2>
+
+<p><a href="mailto:contact@maenohou.com">contact@maenohou.com</a></p>
+
+<footer>
+  <p>
+    <a href="./">使い方はこちら</a>　/
+    ソースコードと不具合報告は
+    <a href="https://github.com/zenpou/chrome-yomiage" target="_blank" rel="noopener">GitHub リポジトリ</a>へ。
+  </p>
+</footer>
+
+</main>
+</body>
+</html>
