@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>小説読み上げ — 導入ガイド</title>
-<meta name="description" content="Chrome拡張「小説読み上げ」の導入ガイド。VOICEVOX / COEIROINK のインストールから設定までを説明します。">
+<title>小説読み上げ — 使い方</title>
+<meta name="description" content="Chrome拡張「小説読み上げ」の使い方。インストール不要ですぐ使えます。音質を上げたい人向けに VOICEVOX / COEIROINK との連携も説明します。">
 <style>
   :root {
     --bg: #ffffff;
@@ -13,7 +13,9 @@
     --border: #e2e5ea;
     --card: #f7f8fa;
     --accent: #1565c0;
-    --accent-fg: #ffffff;
+    --info-bg: #eaf2fb;
+    --info-border: #a9c9ea;
+    --info-fg: #14406e;
     --warn-bg: #fff8e1;
     --warn-border: #f0c36d;
     --warn-fg: #6b4e00;
@@ -27,7 +29,9 @@
       --border: #2c3038;
       --card: #1e2128;
       --accent: #4a9eff;
-      --accent-fg: #0d1117;
+      --info-bg: #14212e;
+      --info-border: #2c5580;
+      --info-fg: #a9cef0;
       --warn-bg: #2e2410;
       --warn-border: #6b5420;
       --warn-fg: #f0d089;
@@ -50,7 +54,7 @@
   header {
     padding: 48px 0 32px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 40px;
+    margin-bottom: 36px;
   }
   h1 { font-size: 1.9rem; margin: 0 0 8px; letter-spacing: -0.01em; }
   header p { margin: 0; color: var(--muted); }
@@ -63,19 +67,28 @@
   }
   h3 { font-size: 1.05rem; margin: 28px 0 10px; }
   p { margin: 0 0 16px; }
-
   a { color: var(--accent); }
 
-  .callout {
-    background: var(--warn-bg);
-    border: 1px solid var(--warn-border);
-    color: var(--warn-fg);
+  .lead {
+    font-size: 1.05rem;
+    background: var(--info-bg);
+    border: 1px solid var(--info-border);
+    color: var(--info-fg);
     border-radius: 10px;
     padding: 18px 20px;
     margin: 0 0 32px;
   }
-  .callout strong { display: block; margin-bottom: 6px; font-size: 1.05rem; }
-  .callout p:last-child { margin-bottom: 0; }
+  .lead p:last-child { margin-bottom: 0; }
+
+  .note {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-fg);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 0 0 24px;
+  }
+  .note p:last-child { margin-bottom: 0; }
 
   .table-wrap { overflow-x: auto; margin: 0 0 20px; }
   table { border-collapse: collapse; width: 100%; min-width: 460px; font-size: 0.95rem; }
@@ -103,12 +116,6 @@
   .card h3 { margin-top: 0; }
   .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
 
-  .key-step {
-    border-left: 3px solid var(--accent);
-    padding: 2px 0 2px 16px;
-    margin: 0 0 16px;
-  }
-
   details {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -132,34 +139,80 @@
 <main>
 
 <header>
-  <h1>小説読み上げ — 導入ガイド</h1>
-  <p>Web小説を音声で読み上げる Chrome 拡張機能のセットアップ手順</p>
+  <h1>小説読み上げ — 使い方</h1>
+  <p>Web小説を音声で読み上げる Chrome 拡張機能</p>
 </header>
 
-<div class="callout">
-  <strong>はじめに — 音声合成エンジンが別途必要です</strong>
+<div class="lead">
   <p>
-    この拡張機能は、パソコン上で動く音声合成ソフト（<b>VOICEVOX</b> または <b>COEIROINK</b>）と連携して動きます。
-    どちらも無償ですが、<b>拡張機能とは別にインストールし、読み上げ中は起動しておく必要があります</b>。
-    インストーラは 1GB を超える大きさです。
+    <b>追加のインストールは不要です。</b>拡張機能を入れて声を選べば、すぐに読み上げが始まります。
+    Chrome に最初から入っている音声を使うので、他に用意するものはありません。
   </p>
   <p>
-    エンジンを入れずに試したい場合は、Chrome 内蔵の音声（Chrome TTS）でも動きます。インストールは不要ですが、音質は大きく劣ります。
+    音質にこだわりたくなったら、あとから <b>VOICEVOX</b> や <b>COEIROINK</b> を入れて切り替えられます。どちらも無償です。
   </p>
 </div>
 
-<h2>どちらのエンジンを選ぶか</h2>
+<h2>まず使ってみる</h2>
+
+<ol>
+  <li>対応サイト（ハーメルン、カクヨム、小説家になろう、ノクターンノベルズ、アルファポリス）で小説の本文ページを開きます。</li>
+  <li>Chrome のツールバーにある拡張機能のアイコンをクリックして、設定パネルを開きます。</li>
+  <li>エンジンのタブは <b>Chrome</b> が選ばれています。「話者」から好きな声を選びます（日本語の声が上に並びます）。</li>
+  <li><b>「設定を保存」</b>を押します。</li>
+  <li>小説のページに戻ると、画面右下に操作パネルがあります。▶ を押すと読み上げが始まります。</li>
+</ol>
+
+<div class="note">
+  <p>
+    <b>「設定を保存」は必ず押してください。</b>
+    声を選んだだけでは反映されません。ここが唯一のつまずきポイントです。
+  </p>
+</div>
+
+<h2>操作パネル</h2>
+
+<p>
+  読み上げ中は、画面右下のパネルから操作できます。
+</p>
+
+<ul>
+  <li>▶ 再生 / ⏸ 一時停止 / ⏹ 停止</li>
+  <li>⏪ ⏩ 段落を前後に移動</li>
+  <li>⏮ ⏭ 前話 / 次話へ移動</li>
+  <li>速度の調整</li>
+</ul>
+
+<p>
+  ⚙ ボタンを押すと、本文をクリックしてその段落から読み直す設定や、
+  最終段落まで読んだら自動で次話へ進む設定などが変更できます。
+  イヤホンの再生ボタンでも操作できます。
+</p>
+
+<h2>音質を上げる（任意）</h2>
+
+<p>
+  Chrome 内蔵の音声は手軽ですが、長い小説を聴き続けると平坦さが気になってきます。
+  そこで <b>VOICEVOX</b> か <b>COEIROINK</b> を入れると、ぐっと自然な読み上げになります。
+</p>
+
+<p>
+  どちらもパソコン上で動く無償のソフトです。
+  拡張機能とは別にインストールして、<b>読み上げ中は起動しておく</b>必要があります。
+  インストーラは 1GB を超えるので、そこだけ許容できるかどうかです。
+</p>
 
 <div class="table-wrap">
 <table>
   <thead>
-    <tr><th></th><th>VOICEVOX</th><th>COEIROINK</th><th>Chrome TTS</th></tr>
+    <tr><th></th><th>Chrome（初期設定）</th><th>VOICEVOX</th><th>COEIROINK</th></tr>
   </thead>
   <tbody>
-    <tr><th>インストール</th><td>必要</td><td>必要</td><td>不要</td></tr>
-    <tr><th>音質</th><td>高い</td><td>高い</td><td>低い</td></tr>
-    <tr><th>話者数</th><td>多い（40キャラ以上）</td><td>やや少なめ</td><td>数種類</td></tr>
-    <tr><th>動作の軽さ</th><td>軽快</td><td>やや重い</td><td>最も軽い</td></tr>
+    <tr><th>インストール</th><td>不要</td><td>必要</td><td>必要</td></tr>
+    <tr><th>音質</th><td>ふつう</td><td>高い</td><td>高い</td></tr>
+    <tr><th>話者数</th><td>数種類</td><td>40キャラ以上</td><td>やや少なめ</td></tr>
+    <tr><th>動作の軽さ</th><td>最も軽い</td><td>軽快</td><td>やや重い</td></tr>
+    <tr><th>会話文の声を分ける</th><td>非対応</td><td>対応</td><td>対応</td></tr>
     <tr><th>費用</th><td>無償</td><td>無償</td><td>無償</td></tr>
   </tbody>
 </table>
@@ -169,89 +222,57 @@
   <b>迷ったら VOICEVOX をおすすめします。</b>話者が多いので、地の文・会話文・心の声に別々の声を割り当てる機能を活かせます。動作も軽快です。
 </p>
 
+<div class="card">
+  <h3>VOICEVOX を入れる</h3>
+  <ol>
+    <li><a href="https://voicevox.hiroshiba.jp/" target="_blank" rel="noopener">VOICEVOX 公式サイト</a>からインストーラをダウンロードして実行します。</li>
+    <li>GPU がない場合は「CPU版」を選びます。問題なく動作します。</li>
+    <li>インストールしたら VOICEVOX を起動して、そのままにしておきます。</li>
+    <li>拡張機能の設定パネルを開き、<b>VOICEVOX</b> タブを選びます。「接続中 ✓」と出れば成功です。</li>
+    <li>話者とスタイルを選んで、<b>「設定を保存」</b>を押します。</li>
+  </ol>
+  <p>
+    うまく繋がらないときは、ブラウザで
+    <a href="http://localhost:50021/version" target="_blank" rel="noopener"><code>http://localhost:50021/version</code></a>
+    を開いてみてください。バージョン番号が出れば、エンジンは正常に動いています。
+  </p>
+</div>
+
+<div class="card">
+  <h3>COEIROINK を入れる</h3>
+  <ol>
+    <li><a href="https://coeiroink.com/" target="_blank" rel="noopener">COEIROINK 公式サイト</a>からダウンロードして展開・実行します。</li>
+    <li>起動したままにしておきます。</li>
+    <li>設定パネルで <b>COEIROINK</b> タブを選び、話者を選んで<b>「設定を保存」</b>を押します。</li>
+  </ol>
+  <p>
+    確認用URLは
+    <a href="http://localhost:50032/" target="_blank" rel="noopener"><code>http://localhost:50032/</code></a>
+    です。
+  </p>
+</div>
+
+<h3>会話文に別の声を割り当てる</h3>
+
+<p>
+  VOICEVOX / COEIROINK を選んでいるときは、設定パネルに「会話文1の声」「会話文2の声」「心の声」が現れます。
+  それぞれ別の話者を割り当てると、地の文と会話が声で区別されて聴き取りやすくなります。
+  「全般と同じ」にしておけば、すべて同じ声で読み上げます。
+</p>
+
 <p>
   なお、この拡張機能は音声を再生するだけで、保存も配布もしません。
   各エンジンのキャラクター規約は主に「生成した音声を公開・配布する場合」の制約なので、
   自分で聴くだけの読み上げであれば、クレジット表記なども不要です。
 </p>
 
-<h2>1. 音声合成エンジンを入れる</h2>
-
-<div class="card">
-  <h3>VOICEVOX を使う場合</h3>
-  <ol>
-    <li><a href="https://voicevox.hiroshiba.jp/" target="_blank" rel="noopener">VOICEVOX 公式サイト</a>からインストーラをダウンロードして実行します。</li>
-    <li>GPU がない場合は「CPU版」を選びます。動作します。</li>
-    <li>インストール後、VOICEVOX を起動します。<b>起動しっぱなしにしておいてください。</b></li>
-  </ol>
-  <p>
-    正しく起動していれば、ブラウザで <a href="http://localhost:50021/version" target="_blank" rel="noopener"><code>http://localhost:50021/version</code></a> を開いたときにバージョン番号が表示されます。
-  </p>
-</div>
-
-<div class="card">
-  <h3>COEIROINK を使う場合</h3>
-  <ol>
-    <li><a href="https://coeiroink.com/" target="_blank" rel="noopener">COEIROINK 公式サイト</a>からダウンロードして展開・実行します。</li>
-    <li>起動したままにしておきます。</li>
-  </ol>
-  <p>
-    確認用URLは <a href="http://localhost:50032/" target="_blank" rel="noopener"><code>http://localhost:50032/</code></a> です。
-  </p>
-</div>
-
-<h2>2. 拡張機能を設定する</h2>
-
-<ol>
-  <li>Chrome のツールバーにある拡張機能のアイコンをクリックして、設定パネルを開きます。</li>
-  <li>上部のタブから、使うエンジン（<b>VOICEVOX</b> / <b>COEIROINK</b> / <b>Chrome</b>）を選びます。</li>
-  <li>エンジンが起動していれば「接続中 ✓」と表示され、話者の一覧が出ます。</li>
-  <li>好みの話者とスタイルを選びます。</li>
-</ol>
-
-<div class="key-step">
-  <p>
-    <b>最後に「設定を保存」ボタンを必ず押してください。</b>
-    タブを切り替えて話者一覧が表示されただけでは、設定は反映されていません。
-    ここを押し忘れると、読み上げ開始時に「接続できません」というエラーになります。
-    最もよくあるつまずきです。
-  </p>
-</div>
-
-<p>
-  設定パネルでは、速度・音量・ピッチ・抑揚のほか、
-  <b>会話文や心の声に別の声を割り当てる</b>こともできます（VOICEVOX / COEIROINK のみ）。
-</p>
-
-<h2>3. 読み上げる</h2>
-
-<ol>
-  <li>対応サイト（ハーメルン、カクヨム、小説家になろう、ノクターンノベルズ、アルファポリス）で小説の本文ページを開きます。</li>
-  <li>画面右下に操作パネルが表示されます。</li>
-  <li>▶ ボタンで読み上げが始まります。</li>
-</ol>
-
-<p>
-  操作パネルからは、段落の前後移動・前話/次話への移動・速度調整ができます。
-  ⚙ ボタンを押すと、本文クリックでその段落へ移動する設定や、最終段落まで読んだら自動で次話へ進む設定などが変更できます。
-</p>
-
 <h2>うまくいかないとき</h2>
 
 <details>
-  <summary>「接続できません」と表示される / 話者一覧が空になる</summary>
-  <p>次の順に確認してください。</p>
-  <ol>
-    <li><b>エンジンが起動しているか。</b>VOICEVOX / COEIROINK のウィンドウが開いたままか確認します。</li>
-    <li><b>確認用URLが開けるか。</b>VOICEVOX なら <code>http://localhost:50021/version</code>、COEIROINK なら <code>http://localhost:50032/</code> をブラウザで開きます。ここが開けなければ、エンジン側の問題です。</li>
-    <li><b>「設定を保存」を押したか。</b>下記の項目を参照してください。</li>
-  </ol>
-</details>
-
-<details>
-  <summary>設定したはずなのに、再生すると「接続できません」になる</summary>
+  <summary>▶ を押すと「接続できません」と出る</summary>
   <p>
-    <b>「設定を保存」ボタンの押し忘れがほとんどです。</b>
+    <b>「設定を保存」の押し忘れがほとんどです。</b>
+    設定パネルを開いて、声を選んだうえで保存ボタンを押してください。
   </p>
   <p>
     たとえば以前 COEIROINK を使っていて、あとから VOICEVOX のタブに切り替えた場合。
@@ -260,9 +281,18 @@
     その状態で再生すると、起動していない COEIROINK へ接続しにいって失敗します。
   </p>
   <p>
-    エラーメッセージに表示されているエンジン名を見てください。
+    エラーに表示されているエンジン名を見てください。
     <b>自分が選んだつもりのエンジンと違う名前が出ていれば、保存されていない</b>ということです。
   </p>
+</details>
+
+<details>
+  <summary>VOICEVOX / COEIROINK のタブが「未接続」になる</summary>
+  <ol>
+    <li><b>エンジンが起動しているか。</b>VOICEVOX / COEIROINK のウィンドウが開いたままか確認します。</li>
+    <li><b>確認用URLが開けるか。</b>VOICEVOX なら <code>http://localhost:50021/version</code>、COEIROINK なら <code>http://localhost:50032/</code> をブラウザで開きます。ここが開けなければエンジン側の問題です。</li>
+    <li>エンジンを起動したあとに設定パネルを開き直すと、話者一覧が読み込まれます。</li>
+  </ol>
 </details>
 
 <details>
@@ -276,12 +306,12 @@
   </p>
   <p>
     接続できない場合、原因はほぼ「エンジンが起動していない」か「設定を保存していない」のどちらかです。
-    CORS 設定を <code>all</code> に変えると、他のソフトからもエンジンにアクセスできる状態になるため、変更は勧めません。
+    CORS 設定を <code>all</code> に変えると他のソフトからもエンジンにアクセスできる状態になるため、変更は勧めません。
   </p>
 </details>
 
 <details>
-  <summary>読み上げの声が途中で変わる / 一部が読み飛ばされる</summary>
+  <summary>声が途中で変わる / 一部が読み飛ばされる</summary>
   <p>
     会話文（「」で囲まれた部分）や心の声（（）で囲まれた部分）に別の声を割り当てる機能が有効になっています。
     設定パネルの「会話文1の声」「会話文2の声」「心の声」を「全般と同じ」に戻すと、すべて同じ声になります。
